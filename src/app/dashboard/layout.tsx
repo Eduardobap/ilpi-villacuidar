@@ -31,7 +31,7 @@ const GROUPS = [
   { label: 'Início',      ids: ['dashboard'] },
   { label: 'Cuidados',    ids: ['residentes','evolucoes','passagem','higiene','multidisciplinar','relatorios'] },
   { label: 'Financeiro',  ids: ['financeiro','extrato'] },
-  { label: 'Cozinha',     ids: ['cardapio','estoque','limpeza'] },
+  { label: 'Suprimentos', ids: ['cardapio','estoque','limpeza'] },
   { label: 'Gestão',      ids: ['usuarios','configuracoes'] },
 ]
 
