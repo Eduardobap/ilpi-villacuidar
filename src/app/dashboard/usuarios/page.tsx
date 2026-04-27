@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Profile, UserRole, PostoEnfermagem, ROLE_LABELS, POSTO_LABELS } from '@/types'
+import { Profile, UserRole, PostoEnfermagem, ROLE_LABELS, POSTO_LABELS, ESPECIALIDADE_LABELS } from '@/types'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
