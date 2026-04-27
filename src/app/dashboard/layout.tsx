@@ -15,7 +15,7 @@ const NAV = [
   { id: 'residentes',        label: 'Residentes',          icon: '◻', href: '/dashboard/residentes',         roles: ['admin','enfermeira','tecnico','cuidador','multidisciplinar'] },
   { id: 'evolucoes',         label: 'Evoluções',           icon: '◻', href: '/dashboard/cuidados/evolucoes', roles: ['admin','enfermeira','tecnico','cuidador'] },
   { id: 'passagem',          label: 'Passagem de Plantão', icon: '◻', href: '/dashboard/cuidados/passagem',  roles: ['admin','enfermeira','tecnico','cuidador'] },
-  { id: 'multidisciplinar',  label: 'Multidisciplinar',    icon: '◻', href: '/dashboard/multidisciplinar',   roles: ['admin','enfermeira','multidisciplinar'] },
+  { id: 'multidisciplinar',  label: 'Multidisciplinar',    icon: '◻', href: '/dashboard/multidisciplinar',   roles: ['admin','enfermeira','multidisciplinar','nutricionista'] },
   { id: 'relatorios',        label: 'Relatórios',          icon: '◻', href: '/dashboard/relatorios',         roles: ['admin','enfermeira'] },
   { id: 'financeiro',        label: 'Financeiro',          icon: '◻', href: '/dashboard/financeiro',         roles: ['admin','financeiro'] },
   { id: 'extrato',           label: 'Extrato Bancário',    icon: '◻', href: '/dashboard/extrato',            roles: ['admin','financeiro'] },

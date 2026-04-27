@@ -142,6 +142,15 @@ export interface PAI {
   objetivos?: string
   metas?: string
   intervencoes?: string
+  // Campos do modelo oficial PAI
+  vacinas?: string
+  grau_dependencia?: string
+  medicamentos_fonte?: string
+  frequencia_consultas?: string
+  medico_particular?: boolean
+  medico_especialidade?: string
+  atendimento_externo?: boolean
+  atendimento_tipo?: string
   responsavel_id?: string
   created_at: string
   updated_at: string
@@ -157,6 +166,16 @@ export interface PIA {
   atividades_preferidas?: string
   plano_vida?: string
   preferencias?: string
+  // Campos do modelo oficial PIA
+  grau_dependencia?: string
+  renda_beneficios?: string
+  condicoes_saude?: string
+  escolaridade?: string
+  profissao?: string
+  religiao?: string
+  habitos_rotina?: string
+  habilidades?: string
+  interesses_atividades?: string
   responsavel_id?: string
   created_at: string
   updated_at: string
@@ -318,7 +337,7 @@ export const PERMISSIONS = {
     ['admin', 'nutricionista'].includes(role),
 
   canAccessMultidisciplinar: (role: UserRole) =>
-    ['admin', 'enfermeira', 'multidisciplinar'].includes(role),
+    ['admin', 'enfermeira', 'multidisciplinar', 'nutricionista'].includes(role),
 
   canManageUsers: (role: UserRole) =>
     role === 'admin',
