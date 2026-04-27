@@ -163,6 +163,38 @@ export interface PIA {
   residente?: Residente
 }
 
+export interface KatzAvaliacao {
+  id: string
+  residente_id: string
+  data: string
+  banho: number
+  vestuario: number
+  higiene: number
+  transferencia: number
+  continencia: number
+  alimentacao: number
+  observacoes?: string
+  created_by?: string
+  created_at: string
+  residente?: Pick<Residente, 'id' | 'nome' | 'quarto'>
+}
+
+export type GravidadeSentinela = 'leve' | 'moderado' | 'grave'
+
+export interface EventoSentinela {
+  id: string
+  residente_id: string
+  data: string
+  tipo: string
+  descricao: string
+  gravidade: GravidadeSentinela
+  conduta?: string
+  resolvido: boolean
+  created_by?: string
+  created_at: string
+  residente?: Pick<Residente, 'id' | 'nome' | 'quarto'>
+}
+
 // ── Financeiro ────────────────────────────────────────────
 export interface LancamentoFinanceiro {
   id: string

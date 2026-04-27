@@ -16,7 +16,7 @@ const NAV = [
   { id: 'evolucoes',         label: 'Evoluções',           icon: '◻', href: '/dashboard/cuidados/evolucoes', roles: ['admin','enfermeira','tecnico','cuidador'] },
   { id: 'passagem',          label: 'Passagem de Plantão', icon: '◻', href: '/dashboard/cuidados/passagem',  roles: ['admin','enfermeira','tecnico','cuidador'] },
   { id: 'multidisciplinar',  label: 'Multidisciplinar',    icon: '◻', href: '/dashboard/multidisciplinar',   roles: ['admin','enfermeira','multidisciplinar'] },
-  { id: 'relatorios',        label: 'PAI / PIA',           icon: '◻', href: '/dashboard/relatorios',         roles: ['admin','enfermeira'] },
+  { id: 'relatorios',        label: 'Relatórios',          icon: '◻', href: '/dashboard/relatorios',         roles: ['admin','enfermeira'] },
   { id: 'financeiro',        label: 'Financeiro',          icon: '◻', href: '/dashboard/financeiro',         roles: ['admin','financeiro'] },
   { id: 'extrato',           label: 'Extrato Bancário',    icon: '◻', href: '/dashboard/extrato',            roles: ['admin','financeiro'] },
   { id: 'cardapio',          label: 'Cardápio',            icon: '◻', href: '/dashboard/cozinha/cardapio',   roles: ['admin','nutricionista'] },
