@@ -46,7 +46,7 @@ export default function CardapioPage() {
       .select('*, ingredientes:receitas_ingredientes(*, item:itens_estoque(nome,unidade))')
       .gte('data', semana[0]).lte('data', semana[6]).order('data').order('refeicao')
     setCardapios(data||[])
-    const { data: estoq } = await supabase.from('itens_estoque').select('id,nome,unidade,quantidade_atual').order('nome')
+    const { data: estoq } = await supabase.from('itens_estoque').select('id,nome,unidade,quantidade_atual,quantidade_minima,created_at,updated_at').order('nome')
     setItensEstoque(estoq||[])
   }
 
