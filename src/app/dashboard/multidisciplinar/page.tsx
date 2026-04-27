@@ -26,7 +26,7 @@ export default function MultidisciplinarPage() {
   const supabase = createClient()
   const [tab, setTab] = useState<'historico'|'registrar'>('historico')
   const [evolucoes, setEvolucoes] = useState<EvolucaoMultidisciplinar[]>([])
-  const [residentes, setResidentes] = useState<Residente[]>([])
+  const [residentes, setResidentes] = useState<Pick<Residente, 'id'|'nome'|'quarto'|'posto'>[]>([])
   const [form, setForm] = useState({ ...FORM_EMPTY })
   const [filterResidente, setFilterResidente] = useState('')
   const [filterEsp, setFilterEsp] = useState('')
