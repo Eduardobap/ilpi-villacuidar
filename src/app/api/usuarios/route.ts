@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   const host = req.headers.get('host') || 'ilpi-system.vercel.app'
   const protocol = host.includes('localhost') ? 'http' : 'https'
-  const redirectTo = `${protocol}://${host}/completar-cadastro`
+  const redirectTo = `${protocol}://${host}/auth/callback?next=/completar-cadastro`
 
   const { data: newUser, error: authError } = await adminSupabase.auth.admin.inviteUserByEmail(email, {
     data: { full_name, role },

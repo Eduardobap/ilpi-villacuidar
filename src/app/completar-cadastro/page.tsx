@@ -1,6 +1,6 @@
 'use client'
 import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { EspecialidadeMulti, ESPECIALIDADE_LABELS, UserRole } from '@/types'
 
@@ -16,8 +16,16 @@ const S = {
   erro: { background: '#fee2e2', color: '#991b1b', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', marginBottom: '16px' },
 }
 
+const logo = (
+  <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+    <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: '26px', color: '#1a1814', marginBottom: '4px' }}>
+      Villa<span style={{ color: '#40916c', fontStyle: 'italic' }}>Cuidar</span>
+    </div>
+    <div style={{ fontSize: '11px', color: '#9a9588', letterSpacing: '1px', textTransform: 'uppercase' as const }}>Sistema ILPI</div>
+  </div>
+)
+
 function CompletarCadastroInner() {
-  const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createClient()
 
@@ -31,23 +39,12 @@ function CompletarCadastroInner() {
 
   useEffect(() => {
     async function verificar() {
-      const token_hash = searchParams.get('token_hash')
-      const type = searchParams.get('type')
-
-      if (token_hash && type === 'invite') {
-        const { error } = await supabase.auth.verifyOtp({ token_hash, type: 'invite' })
-        if (error) {
-          setStep('erro')
-          setErro('Link inválido ou já utilizado. Solicite um novo convite ao administrador.')
-          return
-        }
-      }
-
-      // Verifica sessão (tanto de verifyOtp acima quanto de redirect com hash)
+      // Sessão já foi estabelecida pela rota /auth/callback antes de chegar aqui
       const { data: { user } } = await supabase.auth.getUser()
+
       if (!user) {
         setStep('erro')
-        setErro('Link inválido ou expirado. Solicite um novo convite.')
+        setErro('Link inválido ou expirado. Solicite um novo convite ao administrador.')
         return
       }
 
@@ -60,7 +57,7 @@ function CompletarCadastroInner() {
         .single()
 
       setRole((profile?.role as UserRole) || null)
-      setNome(profile?.full_name || '')
+      setNome(profile?.full_name || user.email || '')
       setStep('formulario')
     }
 
@@ -82,7 +79,11 @@ function CompletarCadastroInner() {
     setSaving(true)
 
     const { error: pwError } = await supabase.auth.updateUser({ password: form.senha })
-    if (pwError) { setErro('Erro ao definir senha: ' + pwError.message); setSaving(false); return }
+    if (pwError) {
+      setErro('Erro ao definir senha: ' + pwError.message)
+      setSaving(false)
+      return
+    }
 
     const updates: Record<string, string> = {}
     if (form.conselho.trim()) updates.coren = form.conselho.trim()
@@ -97,21 +98,12 @@ function CompletarCadastroInner() {
     setTimeout(() => router.push('/dashboard'), 2500)
   }
 
-  const logo = (
-    <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-      <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: '26px', color: '#1a1814', marginBottom: '4px' }}>
-        Villa<span style={{ color: '#40916c', fontStyle: 'italic' }}>Cuidar</span>
-      </div>
-      <div style={{ fontSize: '11px', color: '#9a9588', letterSpacing: '1px', textTransform: 'uppercase' as const }}>Sistema ILPI</div>
-    </div>
-  )
-
   if (step === 'verificando') return (
     <div style={S.page}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
       <div style={S.card}>
         {logo}
-        <div style={{ textAlign: 'center', color: '#9a9588', fontSize: '14px' }}>Verificando convite...</div>
+        <div style={{ textAlign: 'center', color: '#9a9588', fontSize: '14px' }}>Verificando acesso...</div>
       </div>
     </div>
   )
@@ -155,7 +147,7 @@ function CompletarCadastroInner() {
           </div>
           <div style={{ fontSize: '13px', color: '#9a9588', lineHeight: '1.6' }}>
             Defina sua senha para ativar o acesso ao sistema.
-            {precisaConselho && ' Complete também o número do seu conselho profissional.'}
+            {precisaConselho && ' Informe também o número do seu conselho profissional.'}
           </div>
         </div>
 
