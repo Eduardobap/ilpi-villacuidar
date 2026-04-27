@@ -42,20 +42,45 @@ const ICONS: Record<string, string> = {
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
 
-  useEffect(() => {
-    async function load() {
+  async function load() {
+    setLoading(true)
+    setLoadError('')
+    try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(data)
+
+      let { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+      // Perfil não existe — cria a partir dos metadados do auth
+      if (!prof) {
+        const meta = user.user_metadata || {}
+        const role = (meta.role as Profile['role']) || 'cuidador'
+        const full_name = meta.full_name || user.email?.split('@')[0] || 'Usuário'
+        await supabase.from('profiles').upsert({ id: user.id, full_name, role, active: true })
+        const { data: created } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        prof = created
+      }
+
+      if (!prof) {
+        setLoadError('Perfil não encontrado. Contate o administrador.')
+        setLoading(false)
+        return
+      }
+
+      setProfile(prof)
+      setLoading(false)
+    } catch {
+      setLoadError('Erro ao carregar sessão. Tente novamente.')
       setLoading(false)
     }
-    load()
-  }, [])
+  }
+
+  useEffect(() => { load() }, [])
 
   async function logout() {
     await supabase.auth.signOut()
@@ -64,7 +89,25 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (loading) return (
     <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#f7f5f0',fontFamily:'DM Sans,sans-serif'}}>
-      <div style={{color:'#5c5850'}}>Carregando...</div>
+      <div style={{color:'#5c5850',fontSize:'14px'}}>Carregando...</div>
+    </div>
+  )
+
+  if (loadError) return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#f7f5f0',fontFamily:'DM Sans,sans-serif',padding:'20px'}}>
+      <div style={{background:'#fff',borderRadius:'16px',padding:'32px 40px',maxWidth:'400px',textAlign:'center',boxShadow:'0 4px 24px rgba(0,0,0,.08)'}}>
+        <div style={{fontSize:'32px',marginBottom:'12px'}}>⚠️</div>
+        <div style={{fontWeight:600,marginBottom:'8px',color:'#1a1814'}}>Erro ao carregar</div>
+        <div style={{fontSize:'13px',color:'#9a9588',marginBottom:'20px',lineHeight:'1.6'}}>{loadError}</div>
+        <div style={{display:'flex',gap:'10px',justifyContent:'center'}}>
+          <button onClick={load} style={{padding:'9px 18px',background:'#40916c',color:'#fff',border:'none',borderRadius:'8px',fontSize:'13px',cursor:'pointer'}}>
+            Tentar novamente
+          </button>
+          <button onClick={logout} style={{padding:'9px 18px',background:'#f7f5f0',color:'#1a1814',border:'1px solid #e0dbd0',borderRadius:'8px',fontSize:'13px',cursor:'pointer'}}>
+            Sair
+          </button>
+        </div>
+      </div>
     </div>
   )
 
