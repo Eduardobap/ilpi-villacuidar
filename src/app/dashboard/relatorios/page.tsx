@@ -152,7 +152,7 @@ function pdfBase(titulo: string, corpo: string) {
   setTimeout(() => { w.print() }, 600)
 }
 
-function htmlPAI(p: any, res?: any) {
+function htmlPAI(p: any, res?: any, prof?: any) {
   const residente = p.residente || res || {}
   const dataNasc = residente.data_nascimento ? new Date(residente.data_nascimento + 'T12:00').toLocaleDateString('pt-BR') : '—'
   const dataInicio = p.data_inicio ? new Date(p.data_inicio + 'T12:00').toLocaleDateString('pt-BR') : '—'
@@ -238,11 +238,11 @@ function htmlPAI(p: any, res?: any) {
 
   <div class="sign">
     <div class="sign-line">Niterói, ___/___/_____<br/>Data</div>
-    <div class="sign-line">_______________________________________<br/>Assinatura e Carimbo do Responsável</div>
+    <div class="sign-line">${prof ? `${prof.full_name}${prof.coren ? '<br/>COREN: ' + prof.coren : ''}` : '_______________________________________'}<br/>${prof ? 'Profissional Responsável' : 'Assinatura e Carimbo do Responsável'}</div>
   </div>`
 }
 
-function htmlPIA(p: any, res?: any) {
+function htmlPIA(p: any, res?: any, prof?: any) {
   const residente = p.residente || res || {}
   const dataNasc = residente.data_nascimento ? new Date(residente.data_nascimento + 'T12:00').toLocaleDateString('pt-BR') : '—'
   const dataAcolhimento = residente.data_entrada ? new Date(residente.data_entrada + 'T12:00').toLocaleDateString('pt-BR') : '—'
@@ -309,14 +309,16 @@ function htmlPIA(p: any, res?: any) {
   ${p.preferencias ? `<div class="field"><label>Preferências</label><p>${p.preferencias}</p></div>` : ''}
 
   <div class="sign">
-    <div class="sign-line">_______________________________________<br/>Responsável da Instituição</div>
+    <div class="sign-line">${prof ? `${prof.full_name}${prof.coren ? '<br/>COREN: ' + prof.coren : ''}` : '_______________________________________'}<br/>${prof ? 'Profissional Responsável' : 'Responsável da Instituição'}</div>
     <div class="sign-line">_______________________________________<br/>Responsável pelo Idoso</div>
   </div>`
 }
 
-function htmlKatz(k: KatzAvaliacao) {
+function htmlKatz(k: KatzAvaliacao, prof?: any) {
   // score = number of dependências (1 = dep, 0 = ind)
   const score = k.banho + k.vestuario + k.higiene + k.transferencia + k.continencia + k.alimentacao
+  const avaliador = (k as any).created_by_profile || prof
+  const signLine = avaliador ? `${avaliador.full_name}${avaliador.coren ? '<br/>COREN: ' + avaliador.coren : ''}` : '_______________________________________'
   const atividades = [
     ['Banho', k.banho], ['Vestir', k.vestuario], ['Banheiro (Higiene)', k.higiene],
     ['Transferência', k.transferencia], ['Continência', k.continencia], ['Alimentação', k.alimentacao],
@@ -360,13 +362,15 @@ function htmlKatz(k: KatzAvaliacao) {
   ${k.observacoes ? `<h3>Observações</h3><div class="field"><p>${k.observacoes}</p></div>` : ''}
 
   <div class="sign">
-    <div class="sign-line">_______________________________________<br/>Responsável pela Avaliação</div>
-    <div class="sign-line">_______________________________________<br/>Data / Assinatura e Carimbo</div>
+    <div class="sign-line">${signLine}<br/>Responsável pela Avaliação</div>
+    <div class="sign-line">Niterói, ${new Date(k.data + 'T12:00').toLocaleDateString('pt-BR')}<br/>Data da Avaliação</div>
   </div>`
 }
 
-function htmlSentinela(e: EventoSentinela) {
+function htmlSentinela(e: EventoSentinela, prof?: any) {
   const corGrav: Record<string, string> = { leve: '#2d6a4f', moderado: '#92400e', grave: '#991b1b' }
+  const registrado = (e as any).created_by_profile || prof
+  const signLine = registrado ? `${registrado.full_name}${registrado.coren ? '<br/>COREN: ' + registrado.coren : ''}` : '_______________________________________'
   return `
   <h2>Evento Sentinela</h2>
   <div class="idrow">
@@ -382,17 +386,21 @@ function htmlSentinela(e: EventoSentinela) {
     <td>${e.resolvido ? '✔ Resolvido' : '⚠ Em acompanhamento'}</td>
   </tr></table>
   <div class="field"><label>Descrição do Evento</label><p>${e.descricao}</p></div>
-  ${e.conduta ? `<div class="field"><label>Conduta Adotada</label><p>${e.conduta}</p></div>` : ''}`
+  ${e.conduta ? `<div class="field"><label>Conduta Adotada</label><p>${e.conduta}</p></div>` : ''}
+  <div class="sign">
+    <div class="sign-line">${signLine}<br/>Profissional Responsável</div>
+    <div class="sign-line">Niterói, ${new Date(e.data + 'T12:00').toLocaleDateString('pt-BR')}<br/>Data do Registro</div>
+  </div>`
 }
 
-function baixarPDFItem(tipo: string, dado: any) {
-  const html = tipo === 'PAI' ? htmlPAI(dado) : tipo === 'PIA' ? htmlPIA(dado) : tipo === 'Katz' ? htmlKatz(dado) : htmlSentinela(dado)
+function baixarPDFItem(tipo: string, dado: any, prof?: any) {
+  const html = tipo === 'PAI' ? htmlPAI(dado, undefined, prof) : tipo === 'PIA' ? htmlPIA(dado, undefined, prof) : tipo === 'Katz' ? htmlKatz(dado, prof) : htmlSentinela(dado, prof)
   pdfBase(`${tipo} — ${dado.residente?.nome || ''}`, html)
 }
 
-function baixarPDFLote(selecionados: { tipo: string; dado: any }[]) {
+function baixarPDFLote(selecionados: { tipo: string; dado: any }[], prof?: any) {
   const corpo = selecionados.map((s, i) => {
-    const html = s.tipo === 'PAI' ? htmlPAI(s.dado) : s.tipo === 'PIA' ? htmlPIA(s.dado) : s.tipo === 'Katz' ? htmlKatz(s.dado) : htmlSentinela(s.dado)
+    const html = s.tipo === 'PAI' ? htmlPAI(s.dado, undefined, prof) : s.tipo === 'PIA' ? htmlPIA(s.dado, undefined, prof) : s.tipo === 'Katz' ? htmlKatz(s.dado, prof) : htmlSentinela(s.dado, prof)
     return html + (i < selecionados.length - 1 ? '<hr class="sep">' : '')
   }).join('')
   pdfBase(`Relatórios Selecionados (${selecionados.length})`, corpo)
@@ -461,9 +469,9 @@ export default function RelatoriosPage() {
     setPais(paiData || [])
     const { data: piaData } = await supabase.from('pia').select('*, residente:residentes(id,nome,quarto,data_nascimento,cpf,rg,plano_saude,responsavel_nome,responsavel_telefone,responsavel_parentesco,alergias,mensalidade,data_entrada,diagnosticos)').order('created_at', { ascending: false })
     setPias(piaData || [])
-    const { data: kData } = await supabase.from('katz_avaliacoes').select('*, residente:residentes(id,nome,quarto)').order('data', { ascending: false })
+    const { data: kData } = await supabase.from('katz_avaliacoes').select('*, residente:residentes(id,nome,quarto), created_by_profile:profiles!created_by(full_name,coren)').order('data', { ascending: false })
     setKatzList((kData || []) as KatzAvaliacao[])
-    const { data: sData } = await supabase.from('eventos_sentinela').select('*, residente:residentes(id,nome,quarto)').order('data', { ascending: false })
+    const { data: sData } = await supabase.from('eventos_sentinela').select('*, residente:residentes(id,nome,quarto), created_by_profile:profiles!created_by(full_name,coren)').order('data', { ascending: false })
     setSentinelaList((sData || []) as EventoSentinela[])
   }
 
@@ -493,8 +501,8 @@ export default function RelatoriosPage() {
   function baixarSelecionados() {
     const lista = itensFiltrados.filter(i => selecionados.has(i.id)).map(i => ({ tipo: i.tipo, dado: i.dado }))
     if (!lista.length) return
-    if (lista.length === 1) baixarPDFItem(lista[0].tipo, lista[0].dado)
-    else baixarPDFLote(lista)
+    if (lista.length === 1) baixarPDFItem(lista[0].tipo, lista[0].dado, profile)
+    else baixarPDFLote(lista, profile)
   }
 
   // ── IA ──
@@ -707,7 +715,7 @@ export default function RelatoriosPage() {
                       <td style={{ padding: '10px 12px', fontSize: '12px', color: '#5c5850' }}>{new Date(item.data + 'T12:00').toLocaleDateString('pt-BR')}</td>
                       <td style={{ padding: '10px 12px', fontSize: '12px', color: '#9a9588', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resumo}</td>
                       <td style={{ padding: '10px 12px' }}>
-                        <button onClick={() => baixarPDFItem(item.tipo, item.dado)} style={{ ...S.btnSec, fontSize: '11px', padding: '5px 10px' }}>📄 PDF</button>
+                        <button onClick={() => baixarPDFItem(item.tipo, item.dado, profile)} style={{ ...S.btnSec, fontSize: '11px', padding: '5px 10px' }}>📄 PDF</button>
                       </td>
                     </tr>
                   )

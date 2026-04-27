@@ -19,6 +19,65 @@ const ESPECIA_COLORS: Record<string,string> = {
   terapeuta_ocupacional:'#92400e', assistente_social:'#134e4a', nutricionista_multi:'#991b1b'
 }
 
+function imprimirMulti(lista: EvolucaoMultidisciplinar[]) {
+  const w = window.open('', '_blank', 'width=860,height=700')
+  if (!w) return
+  const corpo = lista.map(ev => {
+    const prof = ev.created_by_profile as any
+    const resNome = (ev.residente as any)?.nome || '—'
+    const resQuarto = (ev.residente as any)?.quarto || '—'
+    const dataBR = new Date(ev.data + 'T12:00').toLocaleDateString('pt-BR')
+    const espLabel = ESPECIALIDADE_LABELS[ev.especialidade] || ev.especialidade
+    const profNome = prof?.full_name || ''
+    const profCoren = prof?.coren || ''
+    const profEsp = prof?.especialidade ? (ESPECIALIDADE_LABELS[prof.especialidade as EspecialidadeMulti] || espLabel) : espLabel
+    return `
+    <div style="border:1px solid #e0e0e0;border-radius:8px;padding:20px;margin-bottom:24px;page-break-inside:avoid">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0">
+        <div>
+          <div style="font-size:16px;font-weight:700">${resNome}</div>
+          <div style="font-size:12px;color:#666;margin-top:2px">Quarto ${resQuarto}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:600;color:#2d6a4f">${espLabel}</div>
+          <div style="font-size:11px;color:#666">${dataBR}</div>
+          ${ev.tipo_atendimento ? `<div style="font-size:10px;color:#999;margin-top:2px">${ev.tipo_atendimento}</div>` : ''}
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:#40916c;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Evolução</div>
+        <div style="font-size:12px;line-height:1.8">${ev.evolucao_texto}</div>
+      </div>
+      ${ev.conduta ? `<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:#5c5850;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Conduta</div><div style="font-size:12px;line-height:1.8">${ev.conduta}</div></div>` : ''}
+      ${ev.objetivos ? `<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:#5c5850;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Objetivos</div><div style="font-size:12px;line-height:1.8">${ev.objetivos}</div></div>` : ''}
+      ${ev.proximo_atendimento ? `<div style="font-size:12px;color:#666;margin-bottom:12px">Próximo atendimento: ${new Date(ev.proximo_atendimento + 'T12:00').toLocaleDateString('pt-BR')}</div>` : ''}
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e0e0e0">
+        <div style="display:inline-block;text-align:center;min-width:220px;margin-top:24px">
+          <div style="border-top:1px solid #333;padding-top:6px">
+            ${profNome ? `<div style="font-size:11px;font-weight:700">${profNome}</div>` : '<div style="font-size:11px;color:#999">_______________________________</div>'}
+            <div style="font-size:10px;color:#555">${profEsp}</div>
+            ${profCoren ? `<div style="font-size:10px;color:#555">COREN/CRN/CRP: ${profCoren}</div>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`
+  }).join('')
+
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Evoluções Multidisciplinares</title>
+    <style>@page{margin:20mm 15mm}body{font-family:'Segoe UI',sans-serif;color:#1a1814;padding:20px}@media print{button{display:none}}</style></head><body>
+    <div style="text-align:center;border-bottom:2px solid #40916c;padding-bottom:16px;margin-bottom:24px">
+      <div style="font-size:22px;font-weight:700">Villa<span style="color:#40916c;font-style:italic">Cuidar</span></div>
+      <div style="font-size:12px;color:#666;margin-top:4px">Evoluções Multidisciplinares</div>
+      <div style="font-size:11px;color:#999">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+    </div>
+    ${corpo}
+    <div style="text-align:center;margin-top:30px">
+      <button onclick="window.print()" style="padding:10px 24px;background:#40916c;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">Imprimir / Salvar PDF</button>
+    </div></body></html>`)
+  w.document.close(); w.focus()
+  setTimeout(() => w.print(), 600)
+}
+
 const FORM_EMPTY = { residente_id:'', especialidade:'' as EspecialidadeMulti|'', tipo_atendimento:'evolucao', evolucao_texto:'', conduta:'', objetivos:'', proximo_atendimento:'' }
 
 export default function MultidisciplinarPage() {
@@ -44,7 +103,7 @@ export default function MultidisciplinarPage() {
     setResidentes(res || [])
 
     let q = supabase.from('evolucoes_multidisciplinares')
-      .select(`*, residente:residentes(nome,quarto), created_by_profile:profiles!created_by(full_name,especialidade)`)
+      .select(`*, residente:residentes(nome,quarto), created_by_profile:profiles!created_by(full_name,especialidade,coren)`)
       .order('data', { ascending: false }).order('created_at', { ascending: false })
     if (filterResidente) q = q.eq('residente_id', filterResidente)
     if (filterEsp) q = q.eq('especialidade', filterEsp)
@@ -152,6 +211,7 @@ export default function MultidisciplinarPage() {
                     </div>
                     <div style={{display:'flex', gap:'6px'}}>
                       {canEdit(ev) && <button onClick={() => iniciarEdicao(ev)} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>Editar</button>}
+                      <button onClick={() => imprimirMulti([ev])} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>📄 PDF</button>
                       <button onClick={() => setExpandId(open?null:ev.id)} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>{open?'Fechar':'Ver'}</button>
                     </div>
                   </div>

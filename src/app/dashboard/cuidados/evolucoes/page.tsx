@@ -77,12 +77,23 @@ function gerarTexto(f: FormData): string {
 }
 
 // ── PDF ───────────────────────────────────────────────────────
-type EvolucaoComResidente = EvolucaoDiaria & { residente?: Pick<Residente, 'id' | 'nome' | 'quarto' | 'posto'> }
+type EvolucaoComResidente = EvolucaoDiaria & {
+  residente?: Pick<Residente, 'id' | 'nome' | 'quarto' | 'posto'>
+  assinado_por_profile?: { full_name: string; coren?: string }
+  preenchido_por_profile?: { full_name: string; coren?: string }
+}
 
 function htmlEvolucao(ev: EvolucaoComResidente): string {
   const dataBR = new Date(ev.data + 'T12:00').toLocaleDateString('pt-BR')
   const turnoLabel = ev.turno === 'diurno' ? 'Diurno (07h–19h)' : 'Noturno (19h–07h)'
   const statusLabel = ev.status === 'assinada' ? 'Assinada' : ev.status === 'pendente' ? 'Pendente' : 'Rascunho'
+
+  const assinante = ev.assinado_por_profile
+  const preencheu = ev.preenchido_por_profile
+  const assinadoEmBR = ev.assinado_em ? new Date(ev.assinado_em).toLocaleDateString('pt-BR') : '—'
+  const signBlock = assinante
+    ? `<div style="display:inline-block;text-align:center;margin-top:24px;min-width:220px"><div style="border-top:1px solid #333;padding-top:6px"><div style="font-size:11px;font-weight:700">${assinante.full_name}</div>${assinante.coren ? `<div style="font-size:10px;color:#555">COREN: ${assinante.coren}</div>` : ''}<div style="font-size:10px;color:#666">Assinado em: ${assinadoEmBR}</div></div></div>`
+    : `<div style="display:inline-block;text-align:center;margin-top:32px;min-width:220px"><div style="border-top:1px solid #aaa;padding-top:6px">${preencheu ? `<div style="font-size:11px">${preencheu.full_name}${preencheu.coren ? ' · COREN: ' + preencheu.coren : ''}</div>` : ''}<div style="font-size:10px;color:#999">Aguardando assinatura</div></div></div>`
 
   const campos: [string, string | undefined | null][] = [
     ['Data', dataBR],
@@ -125,6 +136,7 @@ function htmlEvolucao(ev: EvolucaoComResidente): string {
       ${ev.intercorrencias ? `<div style="margin-top:8px;padding:8px 12px;background:#fff8f0;border-left:3px solid #f59e0b;border-radius:0 4px 4px 0"><div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:4px">Intercorrências</div><div style="font-size:12px;color:#1a1814">${ev.intercorrencias}</div></div>` : ''}
       ${ev.pendencias_proximo_turno ? `<div style="margin-top:8px;padding:8px 12px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:0 4px 4px 0"><div style="font-size:10px;font-weight:700;color:#1d4e89;text-transform:uppercase;margin-bottom:4px">Pendências Próximo Turno</div><div style="font-size:12px;color:#1a1814">${ev.pendencias_proximo_turno}</div></div>` : ''}
       ${ev.medicacoes_administradas ? `<div style="margin-top:8px"><div style="font-size:10px;font-weight:700;color:#5c5850;text-transform:uppercase;margin-bottom:4px">Medicações Administradas</div><div style="font-size:12px;color:#1a1814">${ev.medicacoes_administradas}</div></div>` : ''}
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e0e0e0">${signBlock}</div>
     </div>`
 }
 
@@ -258,7 +270,7 @@ function AbaHistorico() {
     setSelecionados(new Set())
     let q = supabase
       .from('evolucoes_diarias')
-      .select('*, residente:residentes(id, nome, quarto, posto)')
+      .select('*, residente:residentes(id, nome, quarto, posto), assinado_por_profile:profiles!assinado_por(full_name,coren), preenchido_por_profile:profiles!preenchido_por(full_name,coren)')
       .gte('data', filtros.dataInicio)
       .lte('data', filtros.dataFim)
       .order('data', { ascending: false })
