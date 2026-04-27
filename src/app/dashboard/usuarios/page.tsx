@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Profile, UserRole, PostoEnfermagem, EspecialidadeMulti, ROLE_LABELS, POSTO_LABELS, ESPECIALIDADE_LABELS } from '@/types'
+import { Profile, UserRole, PostoEnfermagem, ROLE_LABELS, POSTO_LABELS } from '@/types'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -22,7 +22,7 @@ const S = {
   }
 }
 
-const FORM_EMPTY = { full_name:'', email:'', password:'', role:'cuidador' as UserRole, posto:'' as any, especialidade:'' as any, coren:'' }
+const FORM_EMPTY = { full_name:'', email:'', role:'cuidador' as UserRole, posto:'' as any }
 
 export default function UsuariosPage() {
   const supabase = createClient()
@@ -46,8 +46,8 @@ export default function UsuariosPage() {
   const upd = (k: string, v: string) => setForm(f => ({...f,[k]:v}))
 
   async function criarUsuario() {
-    if (!form.full_name || !form.email || !form.password) {
-      setMsg('Preencha nome, e-mail e senha.'); return
+    if (!form.full_name || !form.email || !form.role) {
+      setMsg('Preencha nome, e-mail e perfil.'); return
     }
     setSaving(true)
     const res = await fetch('/api/usuarios', {
@@ -58,11 +58,11 @@ export default function UsuariosPage() {
     const json = await res.json()
     setSaving(false)
     if (!res.ok) { setMsg('Erro: ' + json.error); return }
-    setMsg('Usuário criado com sucesso! E-mail de boas-vindas enviado.')
+    setMsg('Convite enviado! O funcionário receberá um e-mail para definir a senha.')
     setForm({...FORM_EMPTY})
     setShowForm(false)
     load()
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(''), 5000)
   }
 
   async function toggleAtivo(id: string, ativo: boolean) {
@@ -78,7 +78,6 @@ export default function UsuariosPage() {
   }
 
   const needsPosto = ['cuidador','tecnico'].includes(form.role)
-  const needsEspecialidade = form.role === 'multidisciplinar'
 
   return (
     <div>
@@ -120,18 +119,17 @@ export default function UsuariosPage() {
       {showForm && (
         <div style={{...S.card, marginBottom:'16px'}}>
           <div style={{fontWeight:600, fontSize:'14px', marginBottom:'16px', paddingBottom:'12px', borderBottom:'1px solid #e0dbd0'}}>Novo Usuário</div>
+          <div style={{background:'#f7f5f0', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px', fontSize:'12px', color:'#5c5850', lineHeight:'1.6'}}>
+            Um e-mail de convite será enviado ao funcionário. Ele definirá a própria senha e, se necessário, informará o número do conselho profissional.
+          </div>
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px'}}>
-            <div>
+            <div style={{gridColumn:'span 2'}}>
               <label style={S.label}>Nome Completo *</label>
               <input value={form.full_name} onChange={e=>upd('full_name',e.target.value)} style={S.input} placeholder="Nome do profissional"/>
             </div>
-            <div>
-              <label style={S.label}>E-mail (login) *</label>
-              <input type="email" value={form.email} onChange={e=>upd('email',e.target.value)} style={S.input} placeholder="email@ilpi.com"/>
-            </div>
-            <div>
-              <label style={S.label}>Senha inicial *</label>
-              <input type="password" value={form.password} onChange={e=>upd('password',e.target.value)} style={S.input} placeholder="Mínimo 8 caracteres"/>
+            <div style={{gridColumn:'span 2'}}>
+              <label style={S.label}>E-mail *</label>
+              <input type="email" value={form.email} onChange={e=>upd('email',e.target.value)} style={S.input} placeholder="email@funcionario.com"/>
             </div>
             <div>
               <label style={S.label}>Perfil *</label>
@@ -143,36 +141,19 @@ export default function UsuariosPage() {
             </div>
             {needsPosto && (
               <div>
-                <label style={S.label}>Posto *</label>
+                <label style={S.label}>Posto de enfermagem *</label>
                 <select value={form.posto} onChange={e=>upd('posto',e.target.value)} style={S.select}>
-                  <option value="">Selecione o posto...</option>
-                  <option value="posto_1">Posto 1 (Quartos 101–120)</option>
-                  <option value="posto_2">Posto 2 (Quartos 121–140)</option>
-                  <option value="posto_3">Posto 3 (Quartos 141–160)</option>
-                </select>
-              </div>
-            )}
-            {needsEspecialidade && (
-              <div>
-                <label style={S.label}>Especialidade *</label>
-                <select value={form.especialidade} onChange={e=>upd('especialidade',e.target.value)} style={S.select}>
                   <option value="">Selecione...</option>
-                  {(Object.entries(ESPECIALIDADE_LABELS) as [EspecialidadeMulti,string][]).map(([v,l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
+                  <option value="posto_1">Posto 1</option>
+                  <option value="posto_2">Posto 2</option>
+                  <option value="posto_3">Posto 3</option>
                 </select>
-              </div>
-            )}
-            {['enfermeira','tecnico'].includes(form.role) && (
-              <div>
-                <label style={S.label}>COREN</label>
-                <input value={form.coren} onChange={e=>upd('coren',e.target.value)} style={S.input} placeholder="Ex: 123456"/>
               </div>
             )}
           </div>
           <div style={{display:'flex', gap:'10px'}}>
             <button onClick={criarUsuario} disabled={saving} style={S.btn()}>
-              {saving ? 'Criando...' : '✅ Criar Usuário'}
+              {saving ? 'Enviando...' : '✉️ Enviar Convite'}
             </button>
             <button onClick={() => { setShowForm(false); setForm({...FORM_EMPTY}) }} style={S.btnSec}>Cancelar</button>
           </div>
