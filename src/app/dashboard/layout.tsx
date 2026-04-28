@@ -11,27 +11,27 @@ export const useAuth = () => useContext(AuthContext)
 
 // ── Nav items ─────────────────────────────────────────────
 const NAV = [
-  { id: 'dashboard',         label: 'Dashboard',          icon: '◻', href: '/dashboard',                   roles: ['admin','enfermeira','tecnico','cuidador','nutricionista','financeiro','multidisciplinar'] },
+  { id: 'dashboard',         label: 'Dashboard',          icon: '◻', href: '/dashboard',                   roles: ['admin','enfermeira','tecnico','cuidador','nutricionista','financeiro','multidisciplinar','suprimentos'] },
   { id: 'residentes',        label: 'Residentes',          icon: '◻', href: '/dashboard/residentes',         roles: ['admin','enfermeira','tecnico','cuidador','multidisciplinar'] },
   { id: 'evolucoes',         label: 'Evoluções',           icon: '◻', href: '/dashboard/cuidados/evolucoes', roles: ['admin','enfermeira','tecnico','cuidador'] },
   { id: 'passagem',          label: 'Passagem de Plantão', icon: '◻', href: '/dashboard/cuidados/passagem',  roles: ['admin','enfermeira','tecnico','cuidador'] },
-  { id: 'higiene',           label: 'Higiene Pessoal',     icon: '◻', href: '/dashboard/cuidados/higiene',   roles: ['admin','enfermeira','tecnico','cuidador'] },
   { id: 'multidisciplinar',  label: 'Multidisciplinar',    icon: '◻', href: '/dashboard/multidisciplinar',   roles: ['admin','enfermeira','multidisciplinar','nutricionista'] },
   { id: 'relatorios',        label: 'Relatórios',          icon: '◻', href: '/dashboard/relatorios',         roles: ['admin','enfermeira'] },
   { id: 'financeiro',        label: 'Financeiro',          icon: '◻', href: '/dashboard/financeiro',         roles: ['admin','financeiro'] },
   { id: 'extrato',           label: 'Extrato Bancário',    icon: '◻', href: '/dashboard/extrato',            roles: ['admin','financeiro'] },
-  { id: 'cardapio',          label: 'Cardápio',            icon: '◻', href: '/dashboard/cozinha/cardapio',   roles: ['admin','nutricionista'] },
-  { id: 'estoque',           label: 'Estoque Cozinha',     icon: '◻', href: '/dashboard/cozinha/estoque',    roles: ['admin','nutricionista'] },
-  { id: 'limpeza',           label: 'Prod. Limpeza',       icon: '◻', href: '/dashboard/limpeza',            roles: ['admin','enfermeira'] },
+  { id: 'higiene',           label: 'Higiene Pessoal',     icon: '◻', href: '/dashboard/cuidados/higiene',   roles: ['admin','nutricionista','suprimentos'] },
+  { id: 'cardapio',          label: 'Cardápio',            icon: '◻', href: '/dashboard/cozinha/cardapio',   roles: ['admin','nutricionista','suprimentos'] },
+  { id: 'estoque',           label: 'Estoque Cozinha',     icon: '◻', href: '/dashboard/cozinha/estoque',    roles: ['admin','nutricionista','suprimentos'] },
+  { id: 'limpeza',           label: 'Prod. Limpeza',       icon: '◻', href: '/dashboard/limpeza',            roles: ['admin','nutricionista','suprimentos'] },
   { id: 'usuarios',          label: 'Usuários',            icon: '◻', href: '/dashboard/usuarios',           roles: ['admin'] },
   { id: 'configuracoes',     label: 'Configurações',       icon: '◻', href: '/dashboard/configuracoes',      roles: ['admin'] },
 ]
 
 const GROUPS = [
   { label: 'Início',      ids: ['dashboard'] },
-  { label: 'Cuidados',    ids: ['residentes','evolucoes','passagem','higiene','multidisciplinar','relatorios'] },
+  { label: 'Cuidados',    ids: ['residentes','evolucoes','passagem','multidisciplinar','relatorios'] },
   { label: 'Financeiro',  ids: ['financeiro','extrato'] },
-  { label: 'Suprimentos', ids: ['cardapio','estoque','limpeza'] },
+  { label: 'Suprimentos', ids: ['higiene','cardapio','estoque','limpeza'] },
   { label: 'Gestão',      ids: ['usuarios','configuracoes'] },
 ]
 

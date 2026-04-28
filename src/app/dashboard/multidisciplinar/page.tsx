@@ -94,7 +94,8 @@ export default function MultidisciplinarPage() {
   const [editId, setEditId] = useState<string|null>(null)
   const [expandId, setExpandId] = useState<string|null>(null)
 
-  const myEsp = profile?.especialidade
+  const myEsp: EspecialidadeMulti | undefined =
+    profile?.especialidade ?? (profile?.role === 'nutricionista' ? 'nutricionista_multi' : undefined)
   const canEdit = (ev: EvolucaoMultidisciplinar) =>
     profile && (PERMISSIONS.canEditSignedEvolucao(profile.role) || (profile.role==='multidisciplinar' && ev.created_by === profile.id))
 

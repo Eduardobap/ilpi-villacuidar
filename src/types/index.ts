@@ -4,7 +4,7 @@
 
 export type UserRole =
   | 'admin' | 'enfermeira' | 'tecnico' | 'cuidador'
-  | 'nutricionista' | 'financeiro' | 'multidisciplinar'
+  | 'nutricionista' | 'financeiro' | 'multidisciplinar' | 'suprimentos'
 
 export type PostoEnfermagem = 'posto_1' | 'posto_2' | 'posto_3'
 
@@ -297,6 +297,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   nutricionista: 'Nutricionista',
   financeiro: 'Equipe Financeira',
   multidisciplinar: 'Equipe Multidisciplinar',
+  suprimentos: 'Equipe de Suprimentos',
 }
 
 export const ESPECIALIDADE_LABELS: Record<EspecialidadeMulti, string> = {
@@ -333,8 +334,11 @@ export const PERMISSIONS = {
   canAccessFinanceiro: (role: UserRole) =>
     ['admin', 'financeiro'].includes(role),
 
+  canAccessSuprimentos: (role: UserRole) =>
+    ['admin', 'nutricionista', 'suprimentos'].includes(role),
+
   canAccessCozinha: (role: UserRole) =>
-    ['admin', 'nutricionista'].includes(role),
+    ['admin', 'nutricionista', 'suprimentos'].includes(role),
 
   canAccessMultidisciplinar: (role: UserRole) =>
     ['admin', 'enfermeira', 'multidisciplinar', 'nutricionista'].includes(role),
