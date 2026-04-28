@@ -76,11 +76,19 @@ function gerarTexto(f: FormData): string {
   return p.join(' ')
 }
 
+// ── helpers criptografia ──────────────────────────────────────
+async function sha256(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 // ── PDF ───────────────────────────────────────────────────────
 type EvolucaoComResidente = EvolucaoDiaria & {
   residente?: Pick<Residente, 'id' | 'nome' | 'quarto' | 'posto'>
   assinado_por_profile?: { full_name: string; coren?: string }
   preenchido_por_profile?: { full_name: string; coren?: string }
+  assinatura_token?: string
+  assinatura_hash?: string
 }
 
 function htmlEvolucao(ev: EvolucaoComResidente): string {
@@ -90,10 +98,34 @@ function htmlEvolucao(ev: EvolucaoComResidente): string {
 
   const assinante = ev.assinado_por_profile
   const preencheu = ev.preenchido_por_profile
-  const assinadoEmBR = ev.assinado_em ? new Date(ev.assinado_em).toLocaleDateString('pt-BR') : '—'
-  const signBlock = assinante
-    ? `<div style="display:inline-block;text-align:center;margin-top:24px;min-width:220px"><div style="border-top:1px solid #333;padding-top:6px"><div style="font-size:11px;font-weight:700">${assinante.full_name}</div>${assinante.coren ? `<div style="font-size:10px;color:#555">COREN: ${assinante.coren}</div>` : ''}<div style="font-size:10px;color:#666">Assinado em: ${assinadoEmBR}</div></div></div>`
-    : `<div style="display:inline-block;text-align:center;margin-top:32px;min-width:220px"><div style="border-top:1px solid #aaa;padding-top:6px">${preencheu ? `<div style="font-size:11px">${preencheu.full_name}${preencheu.coren ? ' · COREN: ' + preencheu.coren : ''}</div>` : ''}<div style="font-size:10px;color:#999">Aguardando assinatura</div></div></div>`
+  const assinadoEmBR = ev.assinado_em ? new Date(ev.assinado_em).toLocaleString('pt-BR') : '—'
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://ilpi-system.vercel.app'
+  const verUrl = ev.assinatura_token ? `${baseUrl}/verificar/${ev.assinatura_token}` : null
+  const qrUrl = verUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=96x96&margin=0&data=${encodeURIComponent(verUrl)}` : null
+
+  const signBlock = (ev.assinatura_token && assinante)
+    ? `<div style="margin-top:16px;padding:14px 16px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;page-break-inside:avoid">
+        <div style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">✓ Assinatura Eletrônica Avançada — Lei 14.063/2020</div>
+        <div style="display:flex;gap:16px;align-items:flex-start">
+          <div style="flex:1">
+            <div style="display:inline-block;text-align:center;min-width:200px;margin-bottom:10px">
+              <div style="border-top:1px solid #166534;padding-top:5px;margin-top:20px">
+                <div style="font-size:11px;font-weight:700;color:#1a1814">${assinante.full_name}</div>
+                ${assinante.coren ? `<div style="font-size:10px;color:#166534">COREN: ${assinante.coren}</div>` : ''}
+                <div style="font-size:10px;color:#555">Assinado em: ${assinadoEmBR}</div>
+              </div>
+            </div>
+            <div style="font-size:8px;color:#555;font-family:monospace;word-break:break-all;line-height:1.6;background:#fff;padding:6px 8px;border-radius:4px;border:1px solid #d1fae5">
+              Token: ${ev.assinatura_token}<br/>SHA-256: ${ev.assinatura_hash || ''}
+            </div>
+            <div style="margin-top:5px;font-size:8px;color:#2d6a4f">Verifique em: ${verUrl}</div>
+          </div>
+          ${qrUrl ? `<img src="${qrUrl}" width="96" height="96" alt="QR Verificação" style="flex-shrink:0;border:1px solid #d1fae5;border-radius:4px"/>` : ''}
+        </div>
+      </div>`
+    : assinante
+      ? `<div style="display:inline-block;text-align:center;margin-top:24px;min-width:220px"><div style="border-top:1px solid #333;padding-top:6px"><div style="font-size:11px;font-weight:700">${assinante.full_name}</div>${assinante.coren ? `<div style="font-size:10px;color:#555">COREN: ${assinante.coren}</div>` : ''}<div style="font-size:10px;color:#666">Assinado em: ${assinadoEmBR}</div></div></div>`
+      : `<div style="display:inline-block;text-align:center;margin-top:32px;min-width:220px"><div style="border-top:1px solid #aaa;padding-top:6px">${preencheu ? `<div style="font-size:11px">${preencheu.full_name}${preencheu.coren ? ' · COREN: ' + preencheu.coren : ''}</div>` : ''}<div style="font-size:10px;color:#999">Aguardando assinatura</div></div></div>`
 
   const campos: [string, string | undefined | null][] = [
     ['Data', dataBR],
@@ -563,11 +595,14 @@ export default function EvolucoesPagina() {
       form.evacuou ? 'evacuou' : 'nao_evacuou',
       form.diurese ? 'diurese_presente' : 'diurese_ausente',
     ].join(', ')
+    const assinado_em = new Date().toISOString()
+    const postoFinal = postoFix || (posto !== 'todos' ? posto : res.posto)
+    const evolucaoTexto = gerarTexto(form)
 
     const payload: any = {
       residente_id: res.id,
       data, turno,
-      posto: postoFix || (posto !== 'todos' ? posto : res.posto),
+      posto: postoFinal,
       pressao_arterial: pa,
       temperatura: form.temperatura ? parseFloat(form.temperatura) : null,
       saturacao_o2: form.spo2 ? parseFloat(form.spo2) : null,
@@ -579,21 +614,43 @@ export default function EvolucoesPagina() {
       eliminacoes: elimStr,
       sono: form.dormiu ? 'dormiu' : 'nao_dormiu',
       humor: form.agitado ? 'agitado' : 'calmo',
-      evolucao_texto: gerarTexto(form),
+      evolucao_texto: evolucaoTexto,
       intercorrencias: form.obs || null,
       status: assinar ? 'assinada' : 'pendente',
       preenchido_por: profile?.id,
-      ...(assinar ? { assinado_por: profile?.id, assinado_em: new Date().toISOString() } : {}),
+      ...(assinar ? { assinado_por: profile?.id, assinado_em } : {}),
     }
 
-    const { error } = await supabase
+    const { data: saved, error } = await supabase
       .from('evolucoes_diarias')
       .upsert(payload, { onConflict: 'residente_id,data,turno' })
+      .select('id')
+      .single()
+
+    if (error) { setSaving(false); setMsg('Erro: ' + error.message); return }
+
+    // Assinatura digital avançada
+    if (assinar && saved?.id && profile) {
+      const token = crypto.randomUUID()
+      const conteudo = [res.id, data, turno, postoFinal, evolucaoTexto, profile.id, assinado_em].join('|')
+      const hash = await sha256(conteudo)
+      await Promise.all([
+        supabase.from('assinaturas_digitais').insert({
+          token,
+          tipo: 'evolucao',
+          documento_id: saved.id,
+          conteudo_hash: hash,
+          assinado_por: profile.id,
+          assinado_em,
+          nome_profissional: profile.full_name,
+          registro_profissional: profile.coren || null,
+        }),
+        supabase.from('evolucoes_diarias').update({ assinatura_token: token, assinatura_hash: hash }).eq('id', saved.id),
+      ])
+    }
 
     setSaving(false)
-    if (error) { setMsg('Erro: ' + error.message); return }
-
-    setMsg(assinar ? '✅ Assinada!' : '💾 Salvo!')
+    setMsg(assinar ? '✅ Assinado digitalmente!' : '💾 Salvo!')
     await loadStatus()
     setTimeout(() => {
       setMsg('')
