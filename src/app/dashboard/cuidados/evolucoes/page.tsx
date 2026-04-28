@@ -276,6 +276,8 @@ function AbaHistorico() {
   const [lista, setLista] = useState<EvolucaoComResidente[]>([])
   const [loading, setLoading] = useState(false)
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set())
+  const [signingId, setSigningId] = useState<string | null>(null)
+  const [msgSign, setMsgSign] = useState('')
 
   const [filtros, setFiltros] = useState({
     residente_id: '',
@@ -345,6 +347,30 @@ function AbaHistorico() {
     s === 'assinada' ? '✅ Assinada' : s === 'pendente' ? '⏳ Pendente' : '📝 Rascunho'
 
   const updF = (k: string, v: string) => setFiltros(f => ({ ...f, [k]: v }))
+
+  async function assinarDigitalmente(ev: EvolucaoComResidente) {
+    if (!profile) return
+    setSigningId(ev.id)
+    setMsgSign('')
+    const assinado_em = new Date().toISOString()
+    const token = crypto.randomUUID()
+    const conteudo = [ev.residente_id, ev.data, ev.turno, ev.posto, ev.evolucao_texto, profile.id, assinado_em].join('|')
+    const hash = await sha256(conteudo)
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      supabase.from('assinaturas_digitais').insert({
+        token, tipo: 'evolucao', documento_id: ev.id,
+        conteudo_hash: hash, assinado_por: profile.id, assinado_em,
+        nome_profissional: profile.full_name, registro_profissional: profile.coren || null,
+      }),
+      supabase.from('evolucoes_diarias').update({ assinatura_token: token, assinatura_hash: hash }).eq('id', ev.id),
+    ])
+    setSigningId(null)
+    if (e1 || e2) {
+      setMsgSign('Erro ao registrar assinatura. Verifique se o SQL de migration foi executado no Supabase.')
+    } else {
+      await buscar()
+    }
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -417,6 +443,12 @@ function AbaHistorico() {
         </div>
       </div>
 
+      {msgSign && (
+        <div style={{ padding: '10px 16px', background: '#fee2e2', color: '#991b1b', borderRadius: '8px', fontSize: '12px', lineHeight: '1.5' }}>
+          ⚠️ {msgSign}
+        </div>
+      )}
+
       {/* tabela */}
       <div style={{ background: '#fff', border: '1px solid #e0dbd0', borderRadius: '12px', overflow: 'hidden' }}>
         {lista.length === 0 && !loading ? (
@@ -439,7 +471,7 @@ function AbaHistorico() {
                 <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#5c5850', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Turno</th>
                 <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#5c5850', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</th>
                 <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#5c5850', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Evolução (resumo)</th>
-                <th style={{ padding: '10px 14px', width: '80px' }}></th>
+                <th style={{ padding: '10px 14px', width: '120px' }}></th>
               </tr>
             </thead>
             <tbody>
@@ -469,12 +501,25 @@ function AbaHistorico() {
                         {ev.evolucao_texto}
                       </div>
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                      <button onClick={() => imprimirEvolucoes([ev])}
-                        title="Baixar PDF"
-                        style={{ padding: '5px 10px', background: '#f7f5f0', border: '1px solid #e0dbd0', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
-                        📄
-                      </button>
+                    <td style={{ padding: '10px 14px' }}>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {ev.assinatura_token ? (
+                          <span title="Assinatura digital registrada" style={{ fontSize: '14px', color: '#16a34a' }}>🛡</span>
+                        ) : (ev.status === 'assinada' && PERMISSIONS.canSignEvolucao(profile?.role || 'cuidador') && (
+                          <button
+                            onClick={() => assinarDigitalmente(ev)}
+                            disabled={signingId === ev.id}
+                            title="Adicionar assinatura digital"
+                            style={{ padding: '5px 8px', background: '#d8f3dc', border: '1px solid #74c69d', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#2d6a4f', opacity: signingId === ev.id ? 0.6 : 1 }}>
+                            {signingId === ev.id ? '…' : '🔐'}
+                          </button>
+                        ))}
+                        <button onClick={() => imprimirEvolucoes([ev])}
+                          title="Baixar PDF"
+                          style={{ padding: '5px 10px', background: '#f7f5f0', border: '1px solid #e0dbd0', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                          📄
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
