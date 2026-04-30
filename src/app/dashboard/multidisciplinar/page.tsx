@@ -181,9 +181,10 @@ export default function MultidisciplinarPage() {
       showMsg('Evolução atualizada!')
       setEditId(null)
     } else {
-      const { error } = await supabase.from('evolucoes_multidisciplinares').insert({
+      const data = new Date().toISOString().split('T')[0]
+      const { data: saved, error } = await supabase.from('evolucoes_multidisciplinares').insert({
         residente_id: form.residente_id,
-        data: new Date().toISOString().split('T')[0],
+        data,
         especialidade: esp,
         tipo_atendimento: form.tipo_atendimento,
         evolucao_texto: form.evolucao_texto,
@@ -191,10 +192,27 @@ export default function MultidisciplinarPage() {
         objetivos: form.objetivos || null,
         proximo_atendimento: form.proximo_atendimento || null,
         created_by: profile?.id,
-      })
+      }).select('id').single()
       setSaving(false)
       if (error) { showMsg('Erro ao salvar: ' + error.message); return }
-      showMsg('Evolução salva com sucesso!')
+
+      if (saved?.id && profile) {
+        const assinado_em = new Date().toISOString()
+        const token = crypto.randomUUID()
+        const conteudo = [form.residente_id, data, esp, form.evolucao_texto, profile.id, assinado_em].join('|')
+        const hash = await sha256(conteudo)
+        await Promise.all([
+          supabase.from('assinaturas_digitais').insert({
+            token, tipo: 'multidisciplinar', documento_id: saved.id,
+            conteudo_hash: hash, assinado_por: profile.id, assinado_em,
+            nome_profissional: profile.full_name,
+            registro_profissional: profile.coren || null,
+            especialidade: esp,
+          }),
+          supabase.from('evolucoes_multidisciplinares').update({ assinatura_token: token, assinatura_hash: hash }).eq('id', saved.id),
+        ])
+      }
+      showMsg('Evolução salva e assinada!')
     }
 
     setForm({...FORM_EMPTY})
@@ -320,15 +338,6 @@ export default function MultidisciplinarPage() {
                       </div>
                     </div>
                     <div style={{display:'flex', gap:'6px'}}>
-                      {!ev.assinatura_token && canSign && (
-                        <button
-                          onClick={() => assinarDigitalmente(ev)}
-                          disabled={signingId === ev.id}
-                          title="Assinar digitalmente"
-                          style={{...S.btnSec, fontSize:'12px', padding:'5px 10px', color:'#2d6a4f', background:'#d8f3dc', border:'1px solid #74c69d', opacity: signingId === ev.id ? 0.6 : 1}}>
-                          {signingId === ev.id ? '…' : '🔐 Assinar'}
-                        </button>
-                      )}
                       {canEdit(ev) && (
                         <button onClick={() => iniciarEdicao(ev)} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>Editar</button>
                       )}

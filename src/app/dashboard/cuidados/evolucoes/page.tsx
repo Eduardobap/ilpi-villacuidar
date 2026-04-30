@@ -991,23 +991,14 @@ export default function EvolucoesPagina() {
                   </div>
 
                   {canFill && (
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e0dbd0' }}>
-                      <button onClick={() => salvar(false)} disabled={saving} style={{
-                        flex: 1, padding: '12px', background: '#40916c', color: '#fff', border: 'none',
+                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e0dbd0' }}>
+                      <button onClick={() => salvar(!!canSign)} disabled={saving} style={{
+                        width: '100%', padding: '12px', background: canSign ? '#1d4e89' : '#40916c', color: '#fff', border: 'none',
                         borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer',
                         opacity: saving ? 0.7 : 1, fontFamily: 'inherit'
                       }}>
-                        {saving ? 'Salvando...' : '💾 Salvar e Próximo →'}
+                        {saving ? 'Salvando...' : canSign ? '✍ Salvar e Assinar →' : '💾 Salvar →'}
                       </button>
-                      {canSign && (
-                        <button onClick={() => salvar(true)} disabled={saving} style={{
-                          padding: '12px 20px', background: '#1d4e89', color: '#fff', border: 'none',
-                          borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer',
-                          opacity: saving ? 0.7 : 1, fontFamily: 'inherit'
-                        }}>
-                          ✍ Salvar e Assinar
-                        </button>
-                      )}
                     </div>
                   )}
                 </div>
