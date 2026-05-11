@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Residente } from '@/types'
+import { useAuth } from '@/app/dashboard/layout'
+import { Residente, PERMISSIONS } from '@/types'
 
 type ItemHigiene = {
   id: string
@@ -69,6 +71,8 @@ function nivelInfo(qtd: number, min: number, uso: number) {
 }
 
 export default function HigienePage() {
+  const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [residentes, setResidentes] = useState<Pick<Residente, 'id' | 'nome' | 'quarto'>[]>([])
   const [residenteId, setResidenteId] = useState('')
@@ -98,6 +102,10 @@ export default function HigienePage() {
       .order('item_nome')
     setItens((data || []) as ItemHigiene[])
   }
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessSuprimentos(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(() => { loadResidentes() }, [])
   useEffect(() => { if (residenteId) loadItens(residenteId) }, [residenteId])

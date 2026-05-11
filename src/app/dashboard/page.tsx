@@ -168,7 +168,7 @@ export default function DashboardPage() {
             <AtalhoBtn label="Nova Evolução" icon="✏️" onClick={() => router.push('/dashboard/cuidados/evolucoes')} color="#40916c"/>
             <AtalhoBtn label="Passagem de Plantão" icon="🔄" onClick={() => router.push('/dashboard/cuidados/passagem')} color="#1d4e89"/>
           </>)}
-          {profile?.role !== 'cuidador' && PERMISSIONS.canAccessCuidados(profile!.role) && (
+          {profile?.role !== 'cuidador' && (PERMISSIONS.canAccessCuidados(profile!.role) || PERMISSIONS.canAccessMultidisciplinar(profile!.role)) && (
             <AtalhoBtn label="Residentes" icon="👥" onClick={() => router.push('/dashboard/residentes')} color="#5b21b6"/>
           )}
           {PERMISSIONS.canAccessMultidisciplinar(profile!.role) && (

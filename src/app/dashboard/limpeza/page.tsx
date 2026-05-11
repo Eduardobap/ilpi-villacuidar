@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/app/dashboard/layout'
+import { PERMISSIONS } from '@/types'
 
 type ProdutoLimpeza = {
   id: string
@@ -45,6 +48,8 @@ function dataCompra(dias: number | null): string {
 }
 
 export default function LimpezaPage() {
+  const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [produtos, setProdutos] = useState<ProdutoLimpeza[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -63,6 +68,10 @@ export default function LimpezaPage() {
     const { data } = await supabase.from('produtos_limpeza').select('*').order('nome')
     setProdutos((data || []) as ProdutoLimpeza[])
   }
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessSuprimentos(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(() => { load() }, [])
 

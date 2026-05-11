@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ItemEstoque } from '@/types'
+import { useAuth } from '@/app/dashboard/layout'
+import { ItemEstoque, PERMISSIONS } from '@/types'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -21,6 +23,8 @@ function nivelInfo(item: ItemEstoque) {
 }
 
 export default function EstoquePage() {
+  const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [itens, setItens] = useState<ItemEstoque[]>([])
   const [categorias, setCategorias] = useState<any[]>([])
@@ -49,6 +53,10 @@ export default function EstoquePage() {
     }) : items
     setItens(filtrados)
   }
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessCozinha(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(()=>{ load() },[filterCat, filterStatus])
 

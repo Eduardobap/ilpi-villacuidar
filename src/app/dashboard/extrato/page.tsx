@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/app/dashboard/layout'
+import { PERMISSIONS } from '@/types'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -16,6 +19,8 @@ const STATUS_MAP: Record<string,{label:string,bg:string,color:string}> = {
 }
 
 export default function ExtratoPage() {
+  const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [extrato, setExtrato] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -35,6 +40,10 @@ export default function ExtratoPage() {
       pendentes: rows.filter(r=>r.status_conciliacao!=='conciliado').length,
     })
   }
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessFinanceiro(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(() => { load() }, [])
 

@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Cardapio, ItemEstoque } from '@/types'
+import { useAuth } from '@/app/dashboard/layout'
+import { Cardapio, ItemEstoque, PERMISSIONS } from '@/types'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -29,6 +31,8 @@ function semanaAtual() {
 }
 
 export default function CardapioPage() {
+  const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [semana, setSemana] = useState<string[]>(semanaAtual())
   const [cardapios, setCardapios] = useState<Cardapio[]>([])
@@ -49,6 +53,10 @@ export default function CardapioPage() {
     const { data: estoq } = await supabase.from('itens_estoque').select('id,nome,unidade,quantidade_atual,quantidade_minima,created_at,updated_at').order('nome')
     setItensEstoque(estoq||[])
   }
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessCozinha(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(()=>{ load() },[semana])
 

@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
-import { Residente, KatzAvaliacao, EventoSentinela, GravidadeSentinela } from '@/types'
+import { useRouter } from 'next/navigation'
+import { Residente, KatzAvaliacao, EventoSentinela, GravidadeSentinela, PERMISSIONS } from '@/types'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -409,6 +410,7 @@ function baixarPDFLote(selecionados: { tipo: string; dado: any }[], prof?: any) 
 // ── COMPONENTE PRINCIPAL ────────────────────────────────────
 export default function RelatoriosPage() {
   const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const today = new Date().toISOString().split('T')[0]
   const [tab, setTab] = useState<Tab>('historico')
@@ -474,6 +476,10 @@ export default function RelatoriosPage() {
     const { data: sData } = await supabase.from('eventos_sentinela').select('*, residente:residentes(id,nome,quarto), created_by_profile:profiles!created_by(full_name,coren)').order('data', { ascending: false })
     setSentinelaList((sData || []) as EventoSentinela[])
   }
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessPAIPIA(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(() => { load() }, [])
 

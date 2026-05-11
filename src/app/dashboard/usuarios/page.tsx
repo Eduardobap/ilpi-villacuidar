@@ -15,7 +15,7 @@ const S = {
       admin:{bg:'#fee2e2',color:'#991b1b'}, enfermeira:{bg:'#dbeafe',color:'#1d4e89'},
       tecnico:{bg:'#ede9fe',color:'#5b21b6'}, cuidador:{bg:'#d8f3dc',color:'#2d6a4f'},
       nutricionista:{bg:'#fef3c7',color:'#92400e'}, financeiro:{bg:'#ccfbf1',color:'#134e4a'},
-      multidisciplinar:{bg:'#f1efe8',color:'#5f5e5a'}
+      multidisciplinar:{bg:'#f1efe8',color:'#5f5e5a'}, suprimentos:{bg:'#e0f2fe',color:'#0369a1'}
     }
     const t = m[c] || {bg:'#f1efe8',color:'#5f5e5a'}
     return { display:'inline-flex' as const, padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:500 as const, background:t.bg, color:t.color }
