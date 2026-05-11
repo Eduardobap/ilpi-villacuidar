@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/app/dashboard/layout'
 import { Profile, UserRole, EspecialidadeMulti, ROLE_LABELS, POSTO_LABELS, ESPECIALIDADE_LABELS } from '@/types'
 
 const S = {
@@ -23,9 +24,10 @@ const S = {
 }
 
 const FORM_EMPTY = { full_name:'', email:'', role:'cuidador' as UserRole, posto:'' as any }
-const ROLES_SEM_CONSELHO: UserRole[] = ['admin', 'cuidador', 'financeiro']
+const ROLES_SEM_CONSELHO: UserRole[] = ['admin', 'cuidador', 'financeiro', 'suprimentos']
 
 export default function UsuariosPage() {
+  const { profile: myProfile } = useAuth()
   const supabase = createClient()
   const [users, setUsers] = useState<Profile[]>([])
   const [form, setForm] = useState({ ...FORM_EMPTY })
@@ -41,13 +43,15 @@ export default function UsuariosPage() {
   const [savingEdit, setSavingEdit] = useState(false)
 
   async function load() {
-    const { data } = await supabase.from('profiles').select('*').order('full_name')
+    let q = supabase.from('profiles').select('*').order('full_name')
+    if (myProfile?.empresa_id) q = q.eq('empresa_id', myProfile.empresa_id)
+    const { data } = await q
     setUsers(data || [])
     const { data: cfg } = await supabase.from('configuracoes').select('assinatura_modo').single()
     if (cfg) setConfigAssinatura(cfg.assinatura_modo)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { if (myProfile !== undefined) load() }, [myProfile])
 
   const upd = (k: string, v: string) => setForm(f => ({...f,[k]:v}))
   const updEdit = (k: string, v: string) => setEditForm(f => ({...f,[k]:v}))

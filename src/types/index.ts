@@ -18,6 +18,38 @@ export type StatusFinanceiro = 'pendente' | 'pago' | 'recebido' | 'vencido' | 'c
 export type TipoLancamento = 'receber' | 'pagar'
 export type StatusResidente = 'ativo' | 'internado' | 'falecido' | 'alta'
 
+// ── Empresas (multi-tenant) ────────────────────────────────
+export type PlanoEmpresa = 'trial' | 'basico' | 'profissional' | 'enterprise'
+export type StatusEmpresa = 'trial' | 'ativo' | 'suspenso' | 'cancelado'
+
+export interface Empresa {
+  id: string
+  nome: string
+  cnpj?: string
+  email_contato?: string
+  telefone?: string
+  endereco?: string
+  plano: PlanoEmpresa
+  status: StatusEmpresa
+  limite_residentes: number
+  limite_usuarios: number
+  trial_ate?: string
+  observacoes?: string
+  created_at: string
+  updated_at: string
+  // computed
+  num_residentes?: number
+  num_usuarios?: number
+}
+
+export const PLANO_LABELS: Record<PlanoEmpresa, string> = {
+  trial: 'Trial', basico: 'Básico', profissional: 'Profissional', enterprise: 'Enterprise',
+}
+
+export const STATUS_EMPRESA_LABELS: Record<StatusEmpresa, string> = {
+  trial: 'Trial', ativo: 'Ativo', suspenso: 'Suspenso', cancelado: 'Cancelado',
+}
+
 // ── Profiles ──────────────────────────────────────────────
 export interface Profile {
   id: string
@@ -27,6 +59,8 @@ export interface Profile {
   especialidade?: EspecialidadeMulti
   coren?: string
   active: boolean
+  empresa_id?: string
+  is_superadmin?: boolean
   created_at: string
   updated_at: string
 }

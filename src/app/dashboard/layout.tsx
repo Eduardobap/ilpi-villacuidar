@@ -74,6 +74,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         return
       }
 
+      if (prof.is_superadmin) { router.push('/superadmin'); return }
+
       setProfile(prof)
       setLoading(false)
     } catch {

@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role,empresa_id').eq('id', user.id).single()
   if (!profile || profile.role !== 'admin') {
     return NextResponse.json({ error: 'Apenas administradores podem criar usuários' }, { status: 403 })
   }
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       full_name,
       role,
       posto: posto || null,
+      empresa_id: profile.empresa_id || null,
     }).eq('id', newUser.user.id)
   }
 
