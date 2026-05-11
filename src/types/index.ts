@@ -19,8 +19,9 @@ export type TipoLancamento = 'receber' | 'pagar'
 export type StatusResidente = 'ativo' | 'internado' | 'falecido' | 'alta'
 
 // ── Empresas (multi-tenant) ────────────────────────────────
-export type PlanoEmpresa = 'trial' | 'basico' | 'profissional' | 'enterprise'
+export type PlanoEmpresa = 'trial' | 'completo'
 export type StatusEmpresa = 'trial' | 'ativo' | 'suspenso' | 'cancelado'
+export type FormaPagamento = 'pix' | 'boleto' | 'cartao'
 
 export interface Empresa {
   id: string
@@ -35,6 +36,9 @@ export interface Empresa {
   limite_usuarios: number
   trial_ate?: string
   observacoes?: string
+  valor_mensal?: number
+  forma_pagamento?: FormaPagamento
+  dia_vencimento?: number
   created_at: string
   updated_at: string
   // computed
@@ -43,7 +47,11 @@ export interface Empresa {
 }
 
 export const PLANO_LABELS: Record<PlanoEmpresa, string> = {
-  trial: 'Trial', basico: 'Básico', profissional: 'Profissional', enterprise: 'Enterprise',
+  trial: 'Trial', completo: 'Completo',
+}
+
+export const FORMA_PAGAMENTO_LABELS: Record<FormaPagamento, string> = {
+  pix: 'PIX', boleto: 'Boleto Bancário', cartao: 'Cartão de Crédito',
 }
 
 export const STATUS_EMPRESA_LABELS: Record<StatusEmpresa, string> = {
