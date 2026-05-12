@@ -24,6 +24,8 @@ const CONSELHO_LABELS: Record<string, string> = {
   terapeuta_ocupacional: 'CREFITO', assistente_social: 'CRESS', nutricionista_multi: 'CRN',
 }
 
+type IlpiCfg = { nomeIlpi: string; logoUrl?: string }
+
 type EvolucaoMultiComAssinatura = EvolucaoMultidisciplinar & {
   assinatura_token?: string
   assinatura_hash?: string
@@ -34,7 +36,7 @@ async function sha256(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-function imprimirMulti(lista: EvolucaoMultiComAssinatura[]) {
+function imprimirMulti(lista: EvolucaoMultiComAssinatura[], cfg: IlpiCfg = { nomeIlpi: 'VillaCuidar' }) {
   const w = window.open('', '_blank', 'width=860,height=700')
   if (!w) return
   const baseUrl = window.location.origin
@@ -103,10 +105,14 @@ function imprimirMulti(lista: EvolucaoMultiComAssinatura[]) {
     </div>`
   }).join('')
 
+  const logoHtml = cfg.logoUrl
+    ? `<img src="${cfg.logoUrl}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">`
+    : ''
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Evoluções Multidisciplinares</title>
     <style>@page{margin:20mm 15mm}body{font-family:'Segoe UI',sans-serif;color:#1a1814;padding:20px}@media print{button{display:none}}</style></head><body>
     <div style="text-align:center;border-bottom:2px solid #40916c;padding-bottom:16px;margin-bottom:24px">
-      <div style="font-size:22px;font-weight:700">Villa<span style="color:#40916c;font-style:italic">Cuidar</span></div>
+      ${logoHtml}
+      <div style="font-size:22px;font-weight:700">${cfg.nomeIlpi}</div>
       <div style="font-size:12px;color:#666;margin-top:4px">Evoluções Multidisciplinares</div>
       <div style="font-size:11px;color:#999">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
     </div>
@@ -134,6 +140,7 @@ export default function MultidisciplinarPage() {
   const [editId, setEditId] = useState<string|null>(null)
   const [expandId, setExpandId] = useState<string|null>(null)
   const [signingId, setSigningId] = useState<string|null>(null)
+  const [ilpiCfg, setIlpiCfg] = useState<IlpiCfg>({ nomeIlpi: 'VillaCuidar' })
 
   const myEsp: EspecialidadeMulti | undefined =
     profile?.especialidade ?? (profile?.role === 'nutricionista' ? 'nutricionista_multi' : undefined)
@@ -142,6 +149,12 @@ export default function MultidisciplinarPage() {
     profile && (PERMISSIONS.canEditSignedEvolucao(profile.role) || (profile.role==='multidisciplinar' && ev.created_by === profile.id))
 
   const canSign = profile && ['admin','enfermeira','multidisciplinar','nutricionista'].includes(profile.role)
+
+  useEffect(() => {
+    supabase.from('configuracoes').select('nome_fantasia,logo_url').maybeSingle().then(({ data }) => {
+      if (data?.nome_fantasia) setIlpiCfg({ nomeIlpi: data.nome_fantasia, logoUrl: data.logo_url || undefined })
+    })
+  }, [])
 
   async function load() {
     const { data: res } = await supabase.from('residentes').select('id,nome,quarto,posto').eq('status','ativo').order('nome')
@@ -341,7 +354,7 @@ export default function MultidisciplinarPage() {
                       {canEdit(ev) && (
                         <button onClick={() => iniciarEdicao(ev)} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>Editar</button>
                       )}
-                      <button onClick={() => imprimirMulti([ev])} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>📄 PDF</button>
+                      <button onClick={() => imprimirMulti([ev], ilpiCfg)} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>📄 PDF</button>
                       <button onClick={() => setExpandId(open?null:ev.id)} style={{...S.btnSec, fontSize:'12px', padding:'5px 10px'}}>{open?'Fechar':'Ver'}</button>
                     </div>
                   </div>

@@ -83,6 +83,8 @@ async function sha256(text: string): Promise<string> {
 }
 
 // ── PDF ───────────────────────────────────────────────────────
+type IlpiCfg = { nomeIlpi: string; logoUrl?: string }
+
 type EvolucaoComResidente = EvolucaoDiaria & {
   residente?: Pick<Residente, 'id' | 'nome' | 'quarto' | 'posto'>
   assinado_por_profile?: { full_name: string; coren?: string }
@@ -172,13 +174,16 @@ function htmlEvolucao(ev: EvolucaoComResidente): string {
     </div>`
 }
 
-function imprimirEvolucoes(lista: EvolucaoComResidente[]) {
+function imprimirEvolucoes(lista: EvolucaoComResidente[], cfg: IlpiCfg = { nomeIlpi: 'VillaCuidar' }) {
   const w = window.open('', '_blank', 'width=860,height=700')
   if (!w) return
   const corpo = lista.map(htmlEvolucao).join('')
   const titulo = lista.length === 1
     ? `Evolução – ${lista[0].residente?.nome || ''} – ${new Date(lista[0].data + 'T12:00').toLocaleDateString('pt-BR')}`
     : `Evoluções Diárias – ${lista.length} registros`
+  const logoHtml = cfg.logoUrl
+    ? `<img src="${cfg.logoUrl}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">`
+    : ''
 
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${titulo}</title>
     <style>
@@ -186,13 +191,13 @@ function imprimirEvolucoes(lista: EvolucaoComResidente[]) {
       body { font-family: 'Segoe UI', sans-serif; color: #1a1814; padding: 20px }
       .header { text-align: center; border-bottom: 2px solid #40916c; padding-bottom: 16px; margin-bottom: 24px }
       .brand { font-size: 22px; font-weight: 700; color: #1a1814 }
-      .brand span { color: #40916c; font-style: italic }
       .subtitle { font-size: 12px; color: #666; margin-top: 4px }
       @media print { button { display: none } }
     </style>
     </head><body>
     <div class="header">
-      <div class="brand">Villa<span>Cuidar</span></div>
+      ${logoHtml}
+      <div class="brand">${cfg.nomeIlpi}</div>
       <div class="subtitle">Sistema ILPI · ${titulo}</div>
       <div class="subtitle">Gerado em ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
     </div>
@@ -278,6 +283,7 @@ function AbaHistorico() {
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set())
   const [signingId, setSigningId] = useState<string | null>(null)
   const [msgSign, setMsgSign] = useState('')
+  const [ilpiCfg, setIlpiCfg] = useState<IlpiCfg>({ nomeIlpi: 'VillaCuidar' })
 
   const [filtros, setFiltros] = useState({
     residente_id: '',
@@ -296,7 +302,12 @@ function AbaHistorico() {
       const { data } = await q
       setResidentes(data || [])
     }
+    async function loadCfg() {
+      const { data } = await supabase.from('configuracoes').select('nome_fantasia,logo_url').maybeSingle()
+      if (data?.nome_fantasia) setIlpiCfg({ nomeIlpi: data.nome_fantasia, logoUrl: data.logo_url || undefined })
+    }
     loadResidentes()
+    loadCfg()
   }, [])
 
   const buscar = useCallback(async () => {
@@ -336,7 +347,7 @@ function AbaHistorico() {
   const baixarSelecionados = () => {
     const sel = lista.filter(e => selecionados.has(e.id))
     if (!sel.length) return
-    imprimirEvolucoes(sel)
+    imprimirEvolucoes(sel, ilpiCfg)
   }
 
   const corStatus = (s: string) =>
@@ -433,7 +444,7 @@ function AbaHistorico() {
             </button>
           )}
           {lista.length > 0 && (
-            <button onClick={() => imprimirEvolucoes(lista)} style={{
+            <button onClick={() => imprimirEvolucoes(lista, ilpiCfg)} style={{
               padding: '8px 16px', background: '#fff', color: '#1a1814', border: '1px solid #e0dbd0',
               borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit'
             }}>
@@ -514,7 +525,7 @@ function AbaHistorico() {
                             {signingId === ev.id ? '…' : '🔐'}
                           </button>
                         ))}
-                        <button onClick={() => imprimirEvolucoes([ev])}
+                        <button onClick={() => imprimirEvolucoes([ev], ilpiCfg)}
                           title="Baixar PDF"
                           style={{ padding: '5px 10px', background: '#f7f5f0', border: '1px solid #e0dbd0', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
                           📄

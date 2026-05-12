@@ -99,7 +99,9 @@ function katzDescricao(score: number): string {
 }
 
 // ── PDF ─────────────────────────────────────────────────────
-function pdfBase(titulo: string, corpo: string) {
+type IlpiCfg = { nomeIlpi: string; logoUrl?: string }
+
+function pdfBase(titulo: string, corpo: string, cfg: IlpiCfg = { nomeIlpi: 'VillaCuidar' }) {
   const w = window.open('', '_blank', 'width=860,height=700')
   if (!w) { alert('Permita pop-ups para gerar o PDF.'); return }
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${titulo}</title>
@@ -138,7 +140,8 @@ function pdfBase(titulo: string, corpo: string) {
   </style></head><body>
   <div class="header">
     <div>
-      <div class="logo">VillaCuidar</div>
+      ${cfg.logoUrl ? `<img src="${cfg.logoUrl}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin-bottom:4px" onerror="this.style.display='none'">` : ''}
+      <div class="logo">${cfg.nomeIlpi}</div>
       <div class="inst">Sistema de Gestão ILPI</div>
     </div>
     <div class="meta">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
@@ -153,7 +156,7 @@ function pdfBase(titulo: string, corpo: string) {
   setTimeout(() => { w.print() }, 600)
 }
 
-function htmlPAI(p: any, res?: any, prof?: any) {
+function htmlPAI(p: any, res?: any, prof?: any, nomeIlpi = 'VillaCuidar') {
   const residente = p.residente || res || {}
   const dataNasc = residente.data_nascimento ? new Date(residente.data_nascimento + 'T12:00').toLocaleDateString('pt-BR') : '—'
   const dataInicio = p.data_inicio ? new Date(p.data_inicio + 'T12:00').toLocaleDateString('pt-BR') : '—'
@@ -206,7 +209,7 @@ function htmlPAI(p: any, res?: any, prof?: any) {
   ${p.vacinas ? `<h3>Vacinas</h3><div class="field"><p>${p.vacinas}</p></div>` : ''}
 
   <div class="inst-text">
-    A VillaCuidar oferece serviços de enfermagem 24h prestados por técnicos de enfermagem e cuidadores de idosos, acompanhamento de enfermagem, nutricional, médico, psicológico e social.
+    A ${nomeIlpi} oferece serviços de enfermagem 24h prestados por técnicos de enfermagem e cuidadores de idosos, acompanhamento de enfermagem, nutricional, médico, psicológico e social.
   </div>
 
   <h3>Grau de Dependência</h3>
@@ -394,17 +397,17 @@ function htmlSentinela(e: EventoSentinela, prof?: any) {
   </div>`
 }
 
-function baixarPDFItem(tipo: string, dado: any, prof?: any) {
-  const html = tipo === 'PAI' ? htmlPAI(dado, undefined, prof) : tipo === 'PIA' ? htmlPIA(dado, undefined, prof) : tipo === 'Katz' ? htmlKatz(dado, prof) : htmlSentinela(dado, prof)
-  pdfBase(`${tipo} — ${dado.residente?.nome || ''}`, html)
+function baixarPDFItem(tipo: string, dado: any, prof?: any, cfg: IlpiCfg = { nomeIlpi: 'VillaCuidar' }) {
+  const html = tipo === 'PAI' ? htmlPAI(dado, undefined, prof, cfg.nomeIlpi) : tipo === 'PIA' ? htmlPIA(dado, undefined, prof) : tipo === 'Katz' ? htmlKatz(dado, prof) : htmlSentinela(dado, prof)
+  pdfBase(`${tipo} — ${dado.residente?.nome || ''}`, html, cfg)
 }
 
-function baixarPDFLote(selecionados: { tipo: string; dado: any }[], prof?: any) {
+function baixarPDFLote(selecionados: { tipo: string; dado: any }[], prof?: any, cfg: IlpiCfg = { nomeIlpi: 'VillaCuidar' }) {
   const corpo = selecionados.map((s, i) => {
-    const html = s.tipo === 'PAI' ? htmlPAI(s.dado, undefined, prof) : s.tipo === 'PIA' ? htmlPIA(s.dado, undefined, prof) : s.tipo === 'Katz' ? htmlKatz(s.dado, prof) : htmlSentinela(s.dado, prof)
+    const html = s.tipo === 'PAI' ? htmlPAI(s.dado, undefined, prof, cfg.nomeIlpi) : s.tipo === 'PIA' ? htmlPIA(s.dado, undefined, prof) : s.tipo === 'Katz' ? htmlKatz(s.dado, prof) : htmlSentinela(s.dado, prof)
     return html + (i < selecionados.length - 1 ? '<hr class="sep">' : '')
   }).join('')
-  pdfBase(`Relatórios Selecionados (${selecionados.length})`, corpo)
+  pdfBase(`Relatórios Selecionados (${selecionados.length})`, corpo, cfg)
 }
 
 // ── COMPONENTE PRINCIPAL ────────────────────────────────────
@@ -463,6 +466,13 @@ export default function RelatoriosPage() {
   const [loadingAI, setLoadingAI] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [ilpiCfg, setIlpiCfg] = useState<IlpiCfg>({ nomeIlpi: 'VillaCuidar' })
+
+  useEffect(() => {
+    supabase.from('configuracoes').select('nome_fantasia,logo_url').maybeSingle().then(({ data }) => {
+      if (data?.nome_fantasia) setIlpiCfg({ nomeIlpi: data.nome_fantasia, logoUrl: data.logo_url || undefined })
+    })
+  }, [])
 
   async function load() {
     const { data: res } = await supabase.from('residentes').select('*').eq('status', 'ativo').order('nome')
@@ -507,8 +517,8 @@ export default function RelatoriosPage() {
   function baixarSelecionados() {
     const lista = itensFiltrados.filter(i => selecionados.has(i.id)).map(i => ({ tipo: i.tipo, dado: i.dado }))
     if (!lista.length) return
-    if (lista.length === 1) baixarPDFItem(lista[0].tipo, lista[0].dado, profile)
-    else baixarPDFLote(lista, profile)
+    if (lista.length === 1) baixarPDFItem(lista[0].tipo, lista[0].dado, profile, ilpiCfg)
+    else baixarPDFLote(lista, profile, ilpiCfg)
   }
 
   // ── IA ──
@@ -721,7 +731,7 @@ export default function RelatoriosPage() {
                       <td style={{ padding: '10px 12px', fontSize: '12px', color: '#5c5850' }}>{new Date(item.data + 'T12:00').toLocaleDateString('pt-BR')}</td>
                       <td style={{ padding: '10px 12px', fontSize: '12px', color: '#9a9588', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resumo}</td>
                       <td style={{ padding: '10px 12px' }}>
-                        <button onClick={() => baixarPDFItem(item.tipo, item.dado, profile)} style={{ ...S.btnSec, fontSize: '11px', padding: '5px 10px' }}>📄 PDF</button>
+                        <button onClick={() => baixarPDFItem(item.tipo, item.dado, profile, ilpiCfg)} style={{ ...S.btnSec, fontSize: '11px', padding: '5px 10px' }}>📄 PDF</button>
                       </td>
                     </tr>
                   )
