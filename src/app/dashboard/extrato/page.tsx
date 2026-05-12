@@ -79,8 +79,10 @@ export default function ExtratoPage() {
     })
     const json = await res.json()
     setAnalisando(false)
-    setMsg(json.ok ? `✅ ${json.atualizados} lançamentos categorizados e conciliados!` : 'Erro: '+json.error)
-    load(); setTimeout(() => setMsg(''), 5000)
+    setMsg(json.ok
+      ? `✅ ${json.atualizados} lançamento(s) processado(s)! Os que não tinham correspondência foram criados automaticamente em Financeiro > Contas a Receber/Pagar.`
+      : 'Erro: ' + json.error)
+    load(); setTimeout(() => setMsg(''), 8000)
   }
 
   async function marcarConciliado(id: string) {
