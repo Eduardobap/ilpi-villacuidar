@@ -390,7 +390,7 @@ export default function ExtratoPage() {
               const lista = categorias.filter(c => c.tipo === tipo)
               return (
                 <div key={tipo} style={S.card}>
-                  <div style={{ fontWeight:600, fontSize:'13px', marginBottom:'14px', paddingBottom:'10px', borderBottom:`2px solid ${tipo === 'receber' ? '#40916c' : '#dc2626'}`, color: tipo === 'receber' ? '#2d6a4f' : '#991b1b', textTransform:'uppercase' as const, letterSpacing:'0.5px', fontSize:'11px' as const }}>
+                  <div style={{ fontWeight:600, fontSize:'11px', marginBottom:'14px', paddingBottom:'10px', borderBottom:`2px solid ${tipo === 'receber' ? '#40916c' : '#dc2626'}`, color: tipo === 'receber' ? '#2d6a4f' : '#991b1b', textTransform:'uppercase' as const, letterSpacing:'0.5px' }}>
                     {tipo === 'receber' ? '↑ Contas a Receber (créditos)' : '↓ Contas a Pagar (débitos)'}
                   </div>
 
