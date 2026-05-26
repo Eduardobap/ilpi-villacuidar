@@ -2,18 +2,26 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Rotas protegidas por role
 const ROUTE_PERMISSIONS: Record<string, string[]> = {
-  '/dashboard/cuidados':       ['admin', 'enfermeira', 'tecnico', 'cuidador'],
-  '/dashboard/multidisciplinar': ['admin', 'enfermeira', 'multidisciplinar', 'nutricionista'],
-  '/dashboard/financeiro':     ['admin', 'financeiro'],
-  '/dashboard/extrato':        ['admin', 'financeiro'],
-  '/dashboard/cozinha':        ['admin', 'nutricionista', 'suprimentos'],
-  '/dashboard/limpeza':        ['admin', 'nutricionista', 'suprimentos'],
-  '/dashboard/residentes':     ['admin', 'enfermeira', 'tecnico', 'cuidador', 'multidisciplinar'],
-  '/dashboard/relatorios':     ['admin', 'enfermeira'],
-  '/dashboard/usuarios':       ['admin'],
-  '/dashboard/configuracoes':  ['admin'],
+  '/dashboard/cuidados/higiene':   ['admin', 'suprimentos'],
+  '/dashboard/cuidados':           ['admin', 'enfermeira', 'tecnico', 'cuidador'],
+  '/dashboard/multidisciplinar':   ['admin', 'enfermeira', 'multidisciplinar', 'nutricionista'],
+  '/dashboard/financeiro':         ['admin', 'financeiro'],
+  '/dashboard/extrato':            ['admin', 'financeiro'],
+  '/dashboard/cozinha':            ['admin', 'nutricionista', 'suprimentos'],
+  '/dashboard/limpeza':            ['admin', 'suprimentos'],
+  '/dashboard/residentes':         ['admin', 'enfermeira', 'tecnico', 'cuidador', 'multidisciplinar'],
+  '/dashboard/relatorios':         ['admin', 'enfermeira'],
+  '/dashboard/usuarios':           ['admin'],
+  '/dashboard/configuracoes':      ['admin'],
+}
+
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0].trim()
+  const realIP = request.headers.get('x-real-ip')
+  if (realIP) return realIP.trim()
+  return '127.0.0.1'
 }
 
 export async function middleware(request: NextRequest) {
@@ -42,17 +50,14 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // Redirect para login se não autenticado
   if (!user && path.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect para dashboard se já autenticado e tentar acessar login
   if (user && (path === '/login' || path === '/')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Verificar permissões de rota
   if (user && path.startsWith('/dashboard')) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -60,8 +65,40 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
+    if (!profile) return supabaseResponse
+
+    // IP restriction — admin always exempt
+    if (profile.role !== 'admin') {
+      try {
+        const { data: cfg } = await supabase
+          .from('configuracoes')
+          .select('restricao_dispositivo')
+          .maybeSingle()
+
+        const restricao: Record<string, string> = (cfg as any)?.restricao_dispositivo || {}
+
+        if (restricao[profile.role] === 'restrito') {
+          const clientIP = getClientIP(request)
+
+          const { data: dispositivos } = await supabase
+            .from('dispositivos_homologados')
+            .select('ip_address')
+            .eq('ativo', true)
+
+          const approvedIPs = (dispositivos || []).map((d: any) => d.ip_address)
+
+          if (!approvedIPs.includes(clientIP)) {
+            return NextResponse.redirect(new URL('/acesso-negado', request.url))
+          }
+        }
+      } catch {
+        // Fail open — if restriction check errors, allow access
+      }
+    }
+
+    // Route permission check
     for (const [route, roles] of Object.entries(ROUTE_PERMISSIONS)) {
-      if (path.startsWith(route) && profile && !roles.includes(profile.role)) {
+      if (path.startsWith(route) && !roles.includes(profile.role)) {
         return NextResponse.redirect(new URL('/dashboard?erro=sem-permissao', request.url))
       }
     }

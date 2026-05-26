@@ -379,6 +379,9 @@ export const PERMISSIONS = {
   canAccessSuprimentos: (role: UserRole) =>
     ['admin', 'nutricionista', 'suprimentos'].includes(role),
 
+  canAccessHigieneLimpeza: (role: UserRole) =>
+    ['admin', 'suprimentos'].includes(role),
+
   canAccessCozinha: (role: UserRole) =>
     ['admin', 'nutricionista', 'suprimentos'].includes(role),
 

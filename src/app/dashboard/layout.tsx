@@ -19,10 +19,10 @@ const NAV = [
   { id: 'relatorios',        label: 'Relatórios',          icon: '◻', href: '/dashboard/relatorios',         roles: ['admin','enfermeira'] },
   { id: 'financeiro',        label: 'Financeiro',          icon: '◻', href: '/dashboard/financeiro',         roles: ['admin','financeiro'] },
   { id: 'extrato',           label: 'Extrato Bancário',    icon: '◻', href: '/dashboard/extrato',            roles: ['admin','financeiro'] },
-  { id: 'higiene',           label: 'Higiene Pessoal',     icon: '◻', href: '/dashboard/cuidados/higiene',   roles: ['admin','nutricionista','suprimentos'] },
+  { id: 'higiene',           label: 'Higiene Pessoal',     icon: '◻', href: '/dashboard/cuidados/higiene',   roles: ['admin','suprimentos'] },
   { id: 'cardapio',          label: 'Cardápio',            icon: '◻', href: '/dashboard/cozinha/cardapio',   roles: ['admin','nutricionista','suprimentos'] },
   { id: 'estoque',           label: 'Estoque Cozinha',     icon: '◻', href: '/dashboard/cozinha/estoque',    roles: ['admin','nutricionista','suprimentos'] },
-  { id: 'limpeza',           label: 'Prod. Limpeza',       icon: '◻', href: '/dashboard/limpeza',            roles: ['admin','nutricionista','suprimentos'] },
+  { id: 'limpeza',           label: 'Prod. Limpeza',       icon: '◻', href: '/dashboard/limpeza',            roles: ['admin','suprimentos'] },
   { id: 'usuarios',          label: 'Usuários',            icon: '◻', href: '/dashboard/usuarios',           roles: ['admin'] },
   { id: 'configuracoes',     label: 'Configurações',       icon: '◻', href: '/dashboard/configuracoes',      roles: ['admin'] },
 ]

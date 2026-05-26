@@ -70,7 +70,7 @@ export default function LimpezaPage() {
   }
 
   useEffect(() => {
-    if (profile && !PERMISSIONS.canAccessSuprimentos(profile.role)) router.push('/dashboard')
+    if (profile && !PERMISSIONS.canAccessHigieneLimpeza(profile.role)) router.push('/dashboard')
   }, [profile])
 
   useEffect(() => { load() }, [])
