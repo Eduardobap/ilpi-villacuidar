@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
-import { LancamentoFinanceiro, TipoLancamento, StatusFinanceiro } from '@/types'
+import { LancamentoFinanceiro, TipoLancamento, StatusFinanceiro, PERMISSIONS } from '@/types'
 import { esc } from '@/lib/pdf-utils'
 
 const S = {
@@ -222,6 +223,7 @@ function imprimirRelatorio(
 export default function FinanceiroPage() {
   const supabase = createClient()
   const { profile } = useAuth()
+  const router = useRouter()
   const hoje = new Date().toISOString().split('T')[0]
   const mesAtual = hoje.slice(0, 7)
 
@@ -252,6 +254,10 @@ export default function FinanceiroPage() {
   const [mesSelecionado, setMesSelecionado] = useState(mesAtual)
 
   const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessFinanceiro(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   const showMsg = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 4000) }
   const updL = (k: string, v: string) => setFormLan(f => ({ ...f, [k]: v }))

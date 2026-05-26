@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { Residente, PostoEnfermagem, POSTO_LABELS, PERMISSIONS } from '@/types'
@@ -22,6 +23,7 @@ const EMPTY: Partial<Residente> = { nome:'', quarto:'', posto:'posto_1', nivel_d
 
 export default function ResidentesPage() {
   const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [residentes, setResidentes] = useState<Residente[]>([])
   const [search, setSearch] = useState('')
@@ -46,6 +48,12 @@ export default function ResidentesPage() {
       idade: Math.floor((new Date().getTime() - new Date(r.data_nascimento).getTime()) / (1000*60*60*24*365.25))
     })) || [])
   }
+
+  useEffect(() => {
+    if (profile && !['admin','enfermeira','tecnico','cuidador','multidisciplinar'].includes(profile.role)) {
+      router.push('/dashboard')
+    }
+  }, [profile])
 
   useEffect(() => { load() }, [filterPosto, filterStatus])
 

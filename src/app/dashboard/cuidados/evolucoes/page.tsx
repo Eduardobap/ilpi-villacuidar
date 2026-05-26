@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { Residente, PostoEnfermagem, POSTO_LABELS, PERMISSIONS, EvolucaoDiaria } from '@/types'
@@ -547,6 +548,7 @@ function AbaHistorico() {
 // ── página principal ──────────────────────────────────────────
 export default function EvolucoesPagina() {
   const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
 
   const [aba, setAba] = useState<'novo' | 'historico'>('novo')
@@ -635,6 +637,10 @@ export default function EvolucoesPagina() {
       setForm({ ...FORM0 })
     }
   }, [residentes, idxAtual, data, turno])
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessCuidados(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(() => { loadResidentes() }, [loadResidentes])
   useEffect(() => { loadStatus() }, [loadStatus])

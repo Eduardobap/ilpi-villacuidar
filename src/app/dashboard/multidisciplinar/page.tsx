@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { EvolucaoMultidisciplinar, Residente, EspecialidadeMulti, ESPECIALIDADE_LABELS, PERMISSIONS } from '@/types'
@@ -129,6 +130,7 @@ const FORM_EMPTY = { residente_id:'', especialidade:'' as EspecialidadeMulti|'',
 
 export default function MultidisciplinarPage() {
   const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [tab, setTab] = useState<'historico'|'registrar'>('historico')
   const [evolucoes, setEvolucoes] = useState<EvolucaoMultiComAssinatura[]>([])
@@ -150,6 +152,10 @@ export default function MultidisciplinarPage() {
     profile && (PERMISSIONS.canEditSignedEvolucao(profile.role) || (profile.role==='multidisciplinar' && ev.created_by === profile.id))
 
   const canSign = profile && ['admin','enfermeira','multidisciplinar','nutricionista'].includes(profile.role)
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessMultidisciplinar(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(() => {
     supabase.from('configuracoes').select('nome_fantasia,logo_url').maybeSingle().then(({ data }) => {

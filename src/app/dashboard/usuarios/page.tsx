@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
-import { Profile, UserRole, EspecialidadeMulti, ROLE_LABELS, POSTO_LABELS, ESPECIALIDADE_LABELS } from '@/types'
+import { Profile, UserRole, EspecialidadeMulti, ROLE_LABELS, POSTO_LABELS, ESPECIALIDADE_LABELS, PERMISSIONS } from '@/types'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -28,6 +29,7 @@ const ROLES_SEM_CONSELHO: UserRole[] = ['admin', 'cuidador', 'financeiro', 'supr
 
 export default function UsuariosPage() {
   const { profile: myProfile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
   const [users, setUsers] = useState<Profile[]>([])
   const [form, setForm] = useState({ ...FORM_EMPTY })
@@ -50,6 +52,10 @@ export default function UsuariosPage() {
     const { data: cfg } = await supabase.from('configuracoes').select('assinatura_modo').single()
     if (cfg) setConfigAssinatura(cfg.assinatura_modo)
   }
+
+  useEffect(() => {
+    if (myProfile && !PERMISSIONS.canManageUsers(myProfile.role)) router.push('/dashboard')
+  }, [myProfile])
 
   useEffect(() => { if (myProfile !== undefined) load() }, [myProfile])
 

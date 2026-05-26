@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { PassagemPlantao, PostoEnfermagem, POSTO_LABELS, PERMISSIONS } from '@/types'
@@ -14,6 +15,7 @@ const S = {
 
 export default function PassagemPage() {
   const { profile } = useAuth()
+  const router = useRouter()
   const supabase = createClient()
 
   const [passagens, setPassagens] = useState<PassagemPlantao[]>([])
@@ -35,6 +37,10 @@ export default function PassagemPage() {
     const { data } = await q
     setPassagens(data || [])
   }
+
+  useEffect(() => {
+    if (profile && !PERMISSIONS.canAccessCuidados(profile.role)) router.push('/dashboard')
+  }, [profile])
 
   useEffect(() => { load() }, [filterData, filterPosto])
 
