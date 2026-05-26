@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { Residente, PostoEnfermagem, POSTO_LABELS, PERMISSIONS, EvolucaoDiaria } from '@/types'
+import { esc } from '@/lib/pdf-utils'
 
 // ── tipos ────────────────────────────────────────────────────
 type FormData = {
@@ -182,7 +183,7 @@ function imprimirEvolucoes(lista: EvolucaoComResidente[], cfg: IlpiCfg = { nomeI
     ? `Evolução – ${lista[0].residente?.nome || ''} – ${new Date(lista[0].data + 'T12:00').toLocaleDateString('pt-BR')}`
     : `Evoluções Diárias – ${lista.length} registros`
   const logoHtml = cfg.logoUrl
-    ? `<img src="${cfg.logoUrl}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">`
+    ? `<img src="${esc(cfg.logoUrl)}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">`
     : ''
 
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${titulo}</title>
@@ -197,7 +198,7 @@ function imprimirEvolucoes(lista: EvolucaoComResidente[], cfg: IlpiCfg = { nomeI
     </head><body>
     <div class="header">
       ${logoHtml}
-      <div class="brand">${cfg.nomeIlpi}</div>
+      <div class="brand">${esc(cfg.nomeIlpi)}</div>
       <div class="subtitle">Sistema ILPI · ${titulo}</div>
       <div class="subtitle">Gerado em ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
     </div>

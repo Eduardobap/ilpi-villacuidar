@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { LancamentoFinanceiro, TipoLancamento, StatusFinanceiro } from '@/types'
+import { esc } from '@/lib/pdf-utils'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -105,7 +106,7 @@ function imprimirRelatorio(
     : 'Todo o período'
 
   const logoHtml = cfg.logoUrl
-    ? `<img src="${cfg.logoUrl}" alt="Logo" style="height:44px;object-fit:contain;display:block;margin-bottom:4px;">`
+    ? `<img src="${esc(cfg.logoUrl)}" alt="Logo" style="height:44px;object-fit:contain;display:block;margin-bottom:4px;">`
     : ''
 
   const linhas = lista.map(l => {
@@ -117,14 +118,14 @@ function imprimirRelatorio(
     const sb = statusBg[l.status] || '#fef3c7'
     return `
       <tr style="border-bottom:1px solid #e0dbd0;background:${rowBg};">
-        <td style="padding:9px 10px;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.descricao}</td>
-        <td style="padding:9px 10px;font-size:11px;color:#666;">${resNome}</td>
-        <td style="padding:9px 10px;font-size:11px;color:#666;">${catNome}</td>
+        <td style="padding:9px 10px;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.descricao)}</td>
+        <td style="padding:9px 10px;font-size:11px;color:#666;">${esc(resNome)}</td>
+        <td style="padding:9px 10px;font-size:11px;color:#666;">${esc(catNome)}</td>
         <td style="padding:9px 10px;font-weight:600;color:${tab === 'receber' ? '#2d6a4f' : '#991b1b'};white-space:nowrap;">${fmtBRL(l.valor)}</td>
         <td style="padding:9px 10px;font-size:11px;color:${vencido ? '#991b1b' : '#555'};font-weight:${vencido ? '600' : '400'};">${fmtData(l.data_vencimento)}${vencido ? ' ⚠' : ''}</td>
         <td style="padding:9px 10px;">
           <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:${sb};color:${sc};">
-            ${statusLabel[l.status] || l.status}
+            ${esc(statusLabel[l.status] || l.status)}
           </span>
         </td>
       </tr>`

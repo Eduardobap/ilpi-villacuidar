@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { useRouter } from 'next/navigation'
 import { Residente, KatzAvaliacao, EventoSentinela, GravidadeSentinela, PERMISSIONS } from '@/types'
+import { esc } from '@/lib/pdf-utils'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -140,8 +141,8 @@ function pdfBase(titulo: string, corpo: string, cfg: IlpiCfg = { nomeIlpi: 'Vill
   </style></head><body>
   <div class="header">
     <div>
-      ${cfg.logoUrl ? `<img src="${cfg.logoUrl}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin-bottom:4px" onerror="this.style.display='none'">` : ''}
-      <div class="logo">${cfg.nomeIlpi}</div>
+      ${cfg.logoUrl ? `<img src="${esc(cfg.logoUrl)}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin-bottom:4px" onerror="this.style.display='none'">` : ''}
+      <div class="logo">${esc(cfg.nomeIlpi)}</div>
       <div class="inst">Sistema de Gestão ILPI</div>
     </div>
     <div class="meta">Gerado em ${new Date().toLocaleString('pt-BR')}</div>

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/app/dashboard/layout'
 import { EvolucaoMultidisciplinar, Residente, EspecialidadeMulti, ESPECIALIDADE_LABELS, PERMISSIONS } from '@/types'
+import { esc } from '@/lib/pdf-utils'
 
 const S = {
   card: { background:'#fff', border:'1px solid #e0dbd0', borderRadius:'16px', padding:'20px' },
@@ -106,13 +107,13 @@ function imprimirMulti(lista: EvolucaoMultiComAssinatura[], cfg: IlpiCfg = { nom
   }).join('')
 
   const logoHtml = cfg.logoUrl
-    ? `<img src="${cfg.logoUrl}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">`
+    ? `<img src="${esc(cfg.logoUrl)}" alt="Logo" style="height:48px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">`
     : ''
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Evoluções Multidisciplinares</title>
     <style>@page{margin:20mm 15mm}body{font-family:'Segoe UI',sans-serif;color:#1a1814;padding:20px}@media print{button{display:none}}</style></head><body>
     <div style="text-align:center;border-bottom:2px solid #40916c;padding-bottom:16px;margin-bottom:24px">
       ${logoHtml}
-      <div style="font-size:22px;font-weight:700">${cfg.nomeIlpi}</div>
+      <div style="font-size:22px;font-weight:700">${esc(cfg.nomeIlpi)}</div>
       <div style="font-size:12px;color:#666;margin-top:4px">Evoluções Multidisciplinares</div>
       <div style="font-size:11px;color:#999">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
     </div>

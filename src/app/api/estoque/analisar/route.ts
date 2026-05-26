@@ -8,6 +8,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (!profile || !['admin', 'nutricionista', 'suprimentos'].includes(profile.role)) {
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  }
+
   // Buscar estoque atual
   const { data: itens } = await supabase.from('itens_estoque').select('id,nome,unidade,quantidade_atual,quantidade_minima')
   if (!itens?.length) return NextResponse.json({ alertas: [] })

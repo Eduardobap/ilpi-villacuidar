@@ -4,12 +4,16 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Rotas protegidas por role
 const ROUTE_PERMISSIONS: Record<string, string[]> = {
-  '/dashboard/cuidados':    ['admin', 'enfermeira', 'tecnico', 'cuidador'],
-  '/dashboard/multidisciplinar': ['admin', 'enfermeira', 'multidisciplinar'],
-  '/dashboard/financeiro':  ['admin', 'financeiro'],
-  '/dashboard/cozinha':     ['admin', 'nutricionista'],
-  '/dashboard/usuarios':    ['admin'],
-  '/dashboard/relatorios':  ['admin', 'enfermeira'],
+  '/dashboard/cuidados':       ['admin', 'enfermeira', 'tecnico', 'cuidador'],
+  '/dashboard/multidisciplinar': ['admin', 'enfermeira', 'multidisciplinar', 'nutricionista'],
+  '/dashboard/financeiro':     ['admin', 'financeiro'],
+  '/dashboard/extrato':        ['admin', 'financeiro'],
+  '/dashboard/cozinha':        ['admin', 'nutricionista', 'suprimentos'],
+  '/dashboard/limpeza':        ['admin', 'nutricionista', 'suprimentos'],
+  '/dashboard/residentes':     ['admin', 'enfermeira', 'tecnico', 'cuidador', 'multidisciplinar'],
+  '/dashboard/relatorios':     ['admin', 'enfermeira'],
+  '/dashboard/usuarios':       ['admin'],
+  '/dashboard/configuracoes':  ['admin'],
 }
 
 export async function middleware(request: NextRequest) {

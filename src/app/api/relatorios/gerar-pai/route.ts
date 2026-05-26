@@ -8,6 +8,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (!profile || !['admin', 'enfermeira'].includes(profile.role)) {
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  }
+
   const { residente_id } = await req.json()
   const { data: residente } = await supabase.from('residentes').select('*').eq('id', residente_id).single()
   if (!residente) return NextResponse.json({ error: 'Residente não encontrado' }, { status: 404 })
